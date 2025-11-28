@@ -1,0 +1,29 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "4/5/2016",
+    "reviewer_score": 9.2,
+    "reviewer_nationality": "United Kingdom",
+    "reviewer_total_reviews": 2,
+    "days_since_review": "485 day",
+    "positive_review": "The style of the room was unique and amazing with a light room laminate floors and a stunning black bathroom Our kingsize was very comfy and spacious The hotel itself is very beautiful and they have kept the original staircases and high ceilings All of the staff spoke English perfectly just like most people in the city and I couldn t fault them on anything they were always willing to answer our questions and even gave us a map and told us where we could find some interesting places Hotel Arena s location is pretty perfect as it is less than a 10 minute walk from a tram stop to Centraal Dam Square Rembrandtplein and any other places you might be interested in exploring It s also right next to Oosterpark so I can imagine how nice it would be to go to in the spring and upcoming summer Really loved this place overall and a great hotel to stay at especially if it is your first time in Amsterdam as it was mine",
+    "negative_review": "There were construction works at the front of the hotel but this didn t make much impact when inside However in the reception and all the way to the bottom floor lift was a strong eggy smell that I can only put down to the work outside It was abit gross but once we were by the actual rooms any sign of abnormal smell or noise were gone completely Considering it was a 4 star the room could have been abit neater ie The corners of the room were abit dusty the paint on the windows was cracking but there was nothing major",
+    "positive_word_count": 176,
+    "negative_word_count": 105
+  },
+  "tags": [
+    "Leisure trip",
+    "Group",
+    "Duplex Double Room",
+    "Stayed 3 nights",
+    "Submitted from a mobile device"
+  ],
+  "additional_scoring_info": 194
+}

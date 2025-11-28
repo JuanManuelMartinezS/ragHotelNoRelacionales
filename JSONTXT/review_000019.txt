@@ -1,0 +1,29 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "6/20/2017",
+    "reviewer_score": 7.5,
+    "reviewer_nationality": "Australia",
+    "reviewer_total_reviews": 16,
+    "days_since_review": "44 days",
+    "positive_review": "I liked the hotels history And for such an enormous hotel I can t imagine how many girls were orphaned I liked their breakfast It was a quirky mix of fruits pastries meats and fish breads and the regular bacon and eggs Juices tea and coffee",
+    "negative_review": "We had issues with our electronic key everyday It deactivated It wasn t kept near our phones but somehow there was an issue The staircase for our bed was steep and no handrail The tea coffee facilities weren t updated daily And the floor was dusty and had hair on it and that was upon our arrival That situation didn t change Other than those minor issues the hotel was lovely",
+    "positive_word_count": 48,
+    "negative_word_count": 73
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 4 nights",
+    "Submitted from a mobile device"
+  ],
+  "additional_scoring_info": 194
+}

@@ -1,0 +1,28 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "12/22/2015",
+    "reviewer_score": 3.1,
+    "reviewer_nationality": "China",
+    "reviewer_total_reviews": 9,
+    "days_since_review": "590 day",
+    "positive_review": "nothing",
+    "negative_review": "the restaurant food was terrible my first room was facing the garden construction site which starts at 6am in the morning although per local law is not allowed when I reach the staff he said he could do nothing about it while the construction is actually owned by the hotel it s a real bazaar they can t control it after my insisting they changed my room but the fridge safe and sink wasn t working I stayed there 14 days never again",
+    "positive_word_count": 2,
+    "negative_word_count": 85
+  },
+  "tags": [
+    "Business trip",
+    "Solo traveler",
+    "Duplex Double Room",
+    "Stayed 14 nights"
+  ],
+  "additional_scoring_info": 194
+}

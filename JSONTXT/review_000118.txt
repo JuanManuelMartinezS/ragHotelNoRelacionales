@@ -1,0 +1,29 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "6/17/2016",
+    "reviewer_score": 7.9,
+    "reviewer_nationality": "United Kingdom",
+    "reviewer_total_reviews": 1,
+    "days_since_review": "412 day",
+    "positive_review": "Bed was really comfy and we had a canal view which was nice to wake up to The hotel was warm and beautifully decorated We were given a free drink voucher to compensate for construction which was really nice",
+    "negative_review": "the room next to us were quite loud at night time which proved it a bit difficult to sleep on times The bathroom was really damp due to the wet room and water went by the toilet so we had to wear shoes when using the bathroom after showering The staff member who checked us in charged us a 150 security fee and we were told that this would not be deducted from our bank only held but it was which resulted into the bank blocking my card due to an unauthorised foreign payment Check this when checking in and make sure the bank is aware",
+    "positive_word_count": 40,
+    "negative_word_count": 108
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 3 nights",
+    "Submitted from a mobile device"
+  ],
+  "additional_scoring_info": 194
+}

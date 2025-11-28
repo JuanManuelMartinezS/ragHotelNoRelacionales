@@ -1,0 +1,27 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "12/13/2015",
+    "reviewer_score": 6.0,
+    "reviewer_nationality": "Russia",
+    "reviewer_total_reviews": 6,
+    "days_since_review": "599 day",
+    "positive_review": "Location is good it takes 20 mins by feet and 10 15 mins by tram to get to the city center",
+    "negative_review": "Arena hotel is located in a historical building and definitely needs to be renovated On the territory of the hotel just at the main entrance there are construction works Standard rooms have stairs beds are on the upper level The space of the lower level is very small 50 of it is bathroom No cafes and supermarkets in the nearby No minibar in room only at reception Arena is hardly a 4 star hotel in reality it can be regarded as a 3 hotel only",
+    "positive_word_count": 23,
+    "negative_word_count": 87
+  },
+  "tags": [
+    "Solo traveler",
+    "Duplex Double Room",
+    "Stayed 5 nights"
+  ],
+  "additional_scoring_info": 194
+}

@@ -1,0 +1,28 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "12/14/2016",
+    "reviewer_score": 6.3,
+    "reviewer_nationality": "United Kingdom",
+    "reviewer_total_reviews": 1,
+    "days_since_review": "232 day",
+    "positive_review": "breakfast on first day bacon ran out new batch was undercooked and not very hot limited choice of cereal and bread next day much improved more cereal yogurt and cooked tomatoes added",
+    "negative_review": "upgraded on arrival very good but unfortunately lovely room had a smell of cigarettes mixed with perfume so changed room next room in attic annexe very cold offered a heater but asked to change again back to regular sized room perfectly adequate as on my own and comfortable but bothered by traffic noise from main road outside",
+    "positive_word_count": 34,
+    "negative_word_count": 59
+  },
+  "tags": [
+    "Leisure trip",
+    "Solo traveler",
+    "Duplex Double Room",
+    "Stayed 2 nights"
+  ],
+  "additional_scoring_info": 194
+}

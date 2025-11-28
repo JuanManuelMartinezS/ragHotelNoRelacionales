@@ -1,0 +1,28 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "12/31/2015",
+    "reviewer_score": 4.2,
+    "reviewer_nationality": "Ireland",
+    "reviewer_total_reviews": 7,
+    "days_since_review": "581 day",
+    "positive_review": "Polite staff",
+    "negative_review": "The hotel is being renovated and an extensive development is unfolding just outside During working hours the noise can be very disturbing The facilities look and sound rickety The A C is extremely loud and not very effective overall the room was too cold What s worse turning it off makes it possible to hear water flowing dropping through pipes in the walls Chinese water torture anyone The bathroom walls are transparent And I don t mean you can maybe make something out if you squint I mean Oh my word I didn t want to see that There is maybe one spot in the room where one does not have a complete view of whatever is happening inside the bathroom The staff didn t change the towels they simply re folded them 3 days in a row with no new towels The hotel is quite far from the center and there s little to do around it If you think you can walk think again and take the tram instead Or another hotel",
+    "positive_word_count": 4,
+    "negative_word_count": 176
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 3 nights"
+  ],
+  "additional_scoring_info": 194
+}

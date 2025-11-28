@@ -1,0 +1,28 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "1/25/2017",
+    "reviewer_score": 6.3,
+    "reviewer_nationality": "South Africa",
+    "reviewer_total_reviews": 6,
+    "days_since_review": "190 day",
+    "positive_review": "Location is good They gave me some freebies for noisy room",
+    "negative_review": "Very bad attitude of personnel at Breakfast Only allowed one coffee from the Coffee machine filter coffee was free Rude behavior of the manager Room was noisy because of dripping water sound heater system in room",
+    "positive_word_count": 12,
+    "negative_word_count": 38
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 1 night"
+  ],
+  "additional_scoring_info": 194
+}

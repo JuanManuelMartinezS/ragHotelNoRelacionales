@@ -1,0 +1,28 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "1/15/2016",
+    "reviewer_score": 7.9,
+    "reviewer_nationality": "United Kingdom",
+    "reviewer_total_reviews": 7,
+    "days_since_review": "566 day",
+    "positive_review": "absolutely stunning hotel lovely food and selection of drinks and a really good location",
+    "negative_review": "They charged all our bank cards at the beginning of our stay and the money is then returned if you pay by a different means Unfortunately they charged 2 of us twice and we are still waiting for the money to be returned a week later Just spoilt it for us as we have been chasing our money back",
+    "positive_word_count": 15,
+    "negative_word_count": 60
+  },
+  "tags": [
+    "Leisure trip",
+    "Group",
+    "Duplex Double Room",
+    "Stayed 2 nights"
+  ],
+  "additional_scoring_info": 194
+}

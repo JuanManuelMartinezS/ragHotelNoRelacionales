@@ -1,0 +1,28 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "6/10/2017",
+    "reviewer_score": 5.4,
+    "reviewer_nationality": "Germany",
+    "reviewer_total_reviews": 21,
+    "days_since_review": "54 days",
+    "positive_review": "The location is good You need 15min to 20min walk to the center depends on your speed The hotel locates in a beautiful park and have a nice interior design The bed was really comfortable",
+    "negative_review": "Sadly I cannot say that the rooms are clean enough for me When we got in our room we immediately notice there s something wet and sticky like juice or something just next to our bed We called the front desk and they said they will send a cleaning lady to us We waited at least half an hour and no one showed up We had to go to the front desk and complain again When we got back later in the evening the juice has been removed but there s still some hair on the spot We were however no interest to complain anymore Also on the wall in the room on the curtain and in the bathroom there s a lot of stains which I had to ignore the whole time I didn t feel comfortable at all The staff at front desk are very friendly However I guess they pay really bad to their cleaning ladies First you will not be greeted by the cleaning staffs if you run into one at the hallway What more annoying is that I got woke up at 7 in the morning by the cleaning ladies because they closed the doors so loudly when they were cleaning other rooms And they didn t close it loudly just once but for at least on hour They kept open and close the door I was really annoyed I was in my holiday and I just wanted to have a good sleep at least The parking place was small but ok When we arrived the ticket machine was broken Someone told us we don t need a ticket to get in for now and we just have to inform the front desk when we check in We did so and paid for 2 days when we checked out When we drove out the ticket machine was broken again So we didn t actually have to plug in the ticket which we have paid with a lot of money Of course we should pay for it because we parked there but still I was not so happy because I have the feeling that I paid for nothing",
+    "positive_word_count": 37,
+    "negative_word_count": 364
+  },
+  "tags": [
+    "Leisure trip",
+    "Family with young children",
+    "2 rooms",
+    "Stayed 2 nights"
+  ],
+  "additional_scoring_info": 194
+}

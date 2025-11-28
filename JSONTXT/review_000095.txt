@@ -1,0 +1,29 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "10/4/2016",
+    "reviewer_score": 9.6,
+    "reviewer_nationality": "United Kingdom",
+    "reviewer_total_reviews": 1,
+    "days_since_review": "303 day",
+    "positive_review": "Great room very comfortable bed Nice and quiet Fantastic decor and amazing staircases The location is great if you want to avoid the hectic nature of the city centre and red light district but can be walked in around half an hour The immediate area is fantastic great Park amazing local restaurants frequented by locals etc one of which has the largest selection of beer available Near by brewery that do tours not Heineken and great beer Good museum near by and even a local coffeeshop that we better value than those in the center",
+    "negative_review": "The work being done externally right now is off putting on arrival Will look great once finished but we did get free drinks to compensate",
+    "positive_word_count": 97,
+    "negative_word_count": 27
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 3 nights",
+    "Submitted from a mobile device"
+  ],
+  "additional_scoring_info": 194
+}

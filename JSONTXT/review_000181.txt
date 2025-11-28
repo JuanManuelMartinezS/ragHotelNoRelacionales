@@ -1,0 +1,29 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "1/12/2016",
+    "reviewer_score": 7.1,
+    "reviewer_nationality": "United Kingdom",
+    "reviewer_total_reviews": 1,
+    "days_since_review": "569 day",
+    "positive_review": "The bedrooms were pleasnt the bed was really comfy It was nice the shower was clean I enjoyed my room Wasn t allowed to check in till 3 but managed to get us a room by 2ish which was good",
+    "negative_review": "When I arrived we got given a little card for a free drink for each of us due to it being under construction disappointed in the fact that before I booked it they never mentioned anything about having work done All the lovely garden had been tourn up Then the next morning I got rudely awakened at 6 45 7 00 by work men banging this went on for a good hour or so That s probably why I wouldn t stay at hotel arena again I was disgusted by that and the fact they don t do full English breakfasts",
+    "positive_word_count": 42,
+    "negative_word_count": 103
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 1 night",
+    "Submitted from a mobile device"
+  ],
+  "additional_scoring_info": 194
+}

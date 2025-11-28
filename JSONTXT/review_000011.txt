@@ -1,0 +1,29 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "7/6/2017",
+    "reviewer_score": 5.8,
+    "reviewer_nationality": "France",
+    "reviewer_total_reviews": 12,
+    "days_since_review": "28 days",
+    "positive_review": "Style location rooms",
+    "negative_review": "6 30 AM started big noise workers loading wood down the windows Stupid room numbering system it took 20 Minutes with a night guard finally to find our rooms The check in staff pointed us in the wrong direction No late dinner bar closes at 1 am Ugly view on trash lorry from windows No information about the computerized telephone Huge price difference between booking Com price 166 euros and hotel price 260",
+    "positive_word_count": 4,
+    "negative_word_count": 75
+  },
+  "tags": [
+    "Business trip",
+    "Solo traveler",
+    "Duplex Twin Room",
+    "Stayed 1 night",
+    "Submitted from a mobile device"
+  ],
+  "additional_scoring_info": 194
+}

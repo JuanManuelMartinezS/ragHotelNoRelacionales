@@ -1,0 +1,29 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "9/19/2016",
+    "reviewer_score": 5.0,
+    "reviewer_nationality": "United Kingdom",
+    "reviewer_total_reviews": 1,
+    "days_since_review": "318 day",
+    "positive_review": "No Positive",
+    "negative_review": "Got charged 50 for a birthday package when it was advertised for 30 on the website This was apparently due to city taxes which we were unaware of The shower was blocked and would flood the room after one use We were unable to get rid of the water so couldn t use the room after we d had a shower Couldn t check us into our room at 3pm had to wait extra 30 minutes Standard Breakfast was very expensive at 17 I highly suggest not to buy Cigarette machine was broken and staff still allowed us to try and use Overall a disappointing stay for a birthday weekend",
+    "positive_word_count": 0,
+    "negative_word_count": 112
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Large King Room",
+    "Stayed 2 nights",
+    "Submitted from a mobile device"
+  ],
+  "additional_scoring_info": 194
+}

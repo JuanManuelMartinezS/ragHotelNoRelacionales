@@ -1,0 +1,18 @@
+{
+  "name": "hotel-system-mongodb",
+  "version": "1.0.0",
+  "description": "Sistema de reservas de hotel con MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "setup": "node scripts/setupValidations.js",
+    "insert-data": "node scripts/insertSampleData.js",
+    "setup-all": "npm run setup && npm run insert-data"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "mongodb": "^5.9.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.52.0"
+  }
+}

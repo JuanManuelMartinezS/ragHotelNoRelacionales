@@ -1,0 +1,29 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "3/23/2016",
+    "reviewer_score": 7.5,
+    "reviewer_nationality": "Ireland",
+    "reviewer_total_reviews": 8,
+    "days_since_review": "498 day",
+    "positive_review": "Staff were fantastic and changed our overall view of the hotel Got off to a bad start room 240 was tiny and they changed us No argument Bar staff and reception staff really friendly and pleasant",
+    "negative_review": "Room 240 should be discontinued It is really too small and only upsets your Customers Breakfast okay but choices a little limited compared to others You could add seeds more fruit etc at very little extra cost",
+    "positive_word_count": 38,
+    "negative_word_count": 39
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 4 nights",
+    "Submitted from a mobile device"
+  ],
+  "additional_scoring_info": 194
+}

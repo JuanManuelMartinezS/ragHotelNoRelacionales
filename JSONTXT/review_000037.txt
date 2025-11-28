@@ -1,0 +1,28 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "4/20/2017",
+    "reviewer_score": 8.8,
+    "reviewer_nationality": "Russia",
+    "reviewer_total_reviews": 85,
+    "days_since_review": "105 day",
+    "positive_review": "Very nice hotel located in a park Ca 30 minutes by walk to the city center Not typical for Amsterdam since most city hotels are located in small buildings But pay attention to the fact that most of the rooms are two storeyed so you will have to use stairs to get to bed",
+    "negative_review": "The glass wall separating the bathroom and the toilet from the room is a weird solution for double It is necessary to darken the glasses much more",
+    "positive_word_count": 56,
+    "negative_word_count": 29
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 2 nights"
+  ],
+  "additional_scoring_info": 194
+}

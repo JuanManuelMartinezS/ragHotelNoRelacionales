@@ -1,0 +1,29 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "3/12/2016",
+    "reviewer_score": 5.0,
+    "reviewer_nationality": "United Kingdom",
+    "reviewer_total_reviews": 1,
+    "days_since_review": "509 day",
+    "positive_review": "The only good thing about this hotel is the friendly staff and the way it looks Considering they have work going on Location is great 5mins walk to tram stop n your in damn square in 10mins Also we bought 3 day travel ticket from the train station for 25 euros n the hotel sell this for 17 50 euros so buy from hotel it s cheaper Trains are not included in the hotel travel card but u won t need trains if your staying in dam Only to and from airport",
+    "negative_review": "The first night we got there we where put in a room where there was a horrible smell coming from the bathroom I raised this with the staff and was given another room However we where there 3 days and the housekeeping is shocking They do not clean rooms properly but most importantly no clean bed sheets They just come make ur bed that s all Same cups same rubbish it s disgusting Please note if you are not a couple or prefer privacy DO NOT book this hotel their rooms are designed in such a way they are not practical Glass doors n the toilet n shower are clearly visible from the room which was really annoying we had a room where I could see the toilet from the bed Other than that it was ok not worth the money we paid",
+    "positive_word_count": 94,
+    "negative_word_count": 145
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 3 nights",
+    "Submitted from a mobile device"
+  ],
+  "additional_scoring_info": 194
+}

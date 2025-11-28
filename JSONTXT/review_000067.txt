@@ -1,0 +1,28 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "12/28/2016",
+    "reviewer_score": 7.5,
+    "reviewer_nationality": "South Africa",
+    "reviewer_total_reviews": 6,
+    "days_since_review": "218 day",
+    "positive_review": "To begin with we were upgraded which made my wife very happy the room was spacious and warm with minimal noise Breakfast has improved hotel was well looked after It has undergone some major renovations since I last stayed there The new wing looks beautiful and the company has invested a lot into the property Super impressed with the Park and the way nature comes together with the hotel New dining area is magnificent and all food looked fantastic we preferred to eat out for dinner because of sight seeing",
+    "negative_review": "Room was not cleaned correctly Wine Champagne glasses left dirty in the room the floors felt dirty and the shower drain was clogged From the day we arrived",
+    "positive_word_count": 92,
+    "negative_word_count": 30
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 4 nights"
+  ],
+  "additional_scoring_info": 194
+}

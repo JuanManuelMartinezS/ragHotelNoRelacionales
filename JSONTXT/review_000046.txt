@@ -1,0 +1,29 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "4/5/2017",
+    "reviewer_score": 4.2,
+    "reviewer_nationality": "United Kingdom",
+    "reviewer_total_reviews": 7,
+    "days_since_review": "120 day",
+    "positive_review": "Massive bed",
+    "negative_review": "The hotel is under construction which was never mentioned when I booked it or at any point until we arrived there We then wandered around empty half finished corridors looking for the temporary lobby The room was nice but the bathroom is a glass box inside the bedroom it s not in anyway private Showering or using the toilet feels aptly like you are performing in some kinky Amsterdam window there was also a nail sticking up at the entrance of the glass bathroom which I first discovered with my barefoot We woke up to the sound of scaffolding being hammered together and someone drilling concrete Hardly the relaxing break from noisey London that I believed I had booked The pictures are of a hotel looking over a park yet the room looked over an empty courtyard scattered with random bits of scaffolding and debris The first floor corridor smelled like they were having some serious blocked plumbing issue or perhaps another guest was very unwell Their 17 breakfast is really lazily thrown together with cheap products and entirely tasteless honestly not worth it get breakfast somewhere else instead We spent 100 in 3 days on uber because this hotel is over a mile from anything and the novelty of walking around pretty canals ends 20 minutes before this hotel even comes into view They will also take 50 deposit from you in advance for every day you are planning to stay This meant on arrival I suddenly had to pay a further 150 which caused a non sterling transaction charge on my card only to have the full amount refunded when we left minus the bank charges for this pointless but menditory transaction We made the best of it but I really wish they had been open about the current state of the place and I definitely would have stayed somewhere else",
+    "positive_word_count": 3,
+    "negative_word_count": 315
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 3 nights",
+    "Submitted from a mobile device"
+  ],
+  "additional_scoring_info": 194
+}

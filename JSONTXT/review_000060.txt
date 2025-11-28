@@ -1,0 +1,28 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "2/6/2017",
+    "reviewer_score": 4.6,
+    "reviewer_nationality": "Malaysia",
+    "reviewer_total_reviews": 6,
+    "days_since_review": "178 day",
+    "positive_review": "The property is beautiful",
+    "negative_review": "The place is completely mismanaged The property is amazing and whoever is running the place is doing it a disservice Don t stay here if you are expecting a 4 star experience it s a 4 star location with 1 star service The restaurant service is the worst I have ever experienced The staff need guidance on how to serve efficiently The hotel has many strange design choices too Had a double bedroom with a friend yet you can easily see into the bathroom shower and toilet Shower overflows all over bathroom quickly You can see into the urinals from the reception area Loud security doors right outside our room woke us up regularly Put the security measures on the elevators ya goofs This is the only negative review I have ever written but the place has potential and needs new management",
+    "positive_word_count": 5,
+    "negative_word_count": 144
+  },
+  "tags": [
+    "Leisure trip",
+    "Group",
+    "Duplex Twin Room",
+    "Stayed 7 nights"
+  ],
+  "additional_scoring_info": 194
+}

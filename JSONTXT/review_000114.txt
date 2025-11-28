@@ -1,0 +1,29 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "7/2/2016",
+    "reviewer_score": 8.8,
+    "reviewer_nationality": "United Kingdom",
+    "reviewer_total_reviews": 1,
+    "days_since_review": "397 day",
+    "positive_review": "This hotel was great value for money Only a few tram stops away from the city centre It was close enough for all the attractions of Amsterdam but far enough away that it was a quiet neighbourhood The zoo is literally a 10 minute walk away or one tram stop Very accessible The room was extremely nice and the bed was outstandingly comfy best nights sleep I ve ever had I would highly recommend this hotel",
+    "negative_review": "No Negative",
+    "positive_word_count": 78,
+    "negative_word_count": 0
+  },
+  "tags": [
+    "Leisure trip",
+    "Couple",
+    "Duplex Double Room",
+    "Stayed 3 nights",
+    "Submitted from a mobile device"
+  ],
+  "additional_scoring_info": 194
+}

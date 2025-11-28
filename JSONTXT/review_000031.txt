@@ -1,0 +1,28 @@
+{
+  "hotel": {
+    "name": "Hotel Arena",
+    "address": "s Gravesandestraat 55 Oost 1092 AA Amsterdam Netherlands",
+    "latitude": 52.3605759,
+    "longitude": 4.9159683,
+    "total_reviews": 1403,
+    "average_score": 7.7
+  },
+  "review": {
+    "date": "5/11/2017",
+    "reviewer_score": 7.1,
+    "reviewer_nationality": "United Kingdom",
+    "reviewer_total_reviews": 14,
+    "days_since_review": "84 days",
+    "positive_review": "Friendly staff The bar restaurant area is lovely and overlooks the park Very modern",
+    "negative_review": "Extensive restorations works going on We had scaffolding outside our window blocking the view Temporary reception area The building is an old hospital you can still see the hospital aspects on the inside When the work is completed i m sure it will be fabulous No fridge in the room well there was one but it was very ineffective",
+    "positive_word_count": 16,
+    "negative_word_count": 61
+  },
+  "tags": [
+    "Leisure trip",
+    "Group",
+    "2 rooms",
+    "Stayed 4 nights"
+  ],
+  "additional_scoring_info": 194
+}
