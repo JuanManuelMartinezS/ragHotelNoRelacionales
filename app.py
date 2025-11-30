@@ -151,6 +151,73 @@ def vector_search_helper(
 
 print("✅ Vector search helper function defined.")
 
+# Generic query function
+def execute_query(database_name, collection_name, query={}, projection=None, limit=0, username=None, password=None):
+    """
+    Execute a generic MongoDB query.
+    
+    Args:
+        database_name (str): Name of the database
+        collection_name (str): Name of the collection
+        query (dict): MongoDB query filter (default: {} for all documents)
+        projection (dict): Fields to include/exclude (default: None for all fields)
+        limit (int): Maximum number of documents to return (default: 0 for no limit)
+        username (str): Optional MongoDB username (uses global client if not provided)
+        password (str): Optional MongoDB password (required if username is provided)
+    
+    Returns:
+        list: List of documents matching the query
+    
+    Example:
+        # Using global credentials
+        results = execute_query("Hotel", "hotel")
+        
+        # Using custom credentials
+        results = execute_query("Hotel", "hotel", {}, None, 0, "myuser", "mypass")
+        
+        # Get specific hotel by name
+        results = execute_query("Hotel", "hotel", {"name": "Hotel Example"})
+        
+        # Get reviews with projection and limit
+        results = execute_query("Hotel", "resena", 
+                               {"rating": {"$gte": 4}}, 
+                               {"comentario": 1, "rating": 1}, 
+                               limit=10)
+    """
+    try:
+        # Use custom credentials if provided
+        if username and password:
+            password_encoded = quote_plus(password)
+            custom_uri = f"mongodb+srv://{username}:{password_encoded}@{CLUSTER}/?retryWrites=true&w=majority&appName={APPNAME}"
+            custom_client = MongoClient(custom_uri)
+            db = custom_client[database_name]
+        else:
+            # Use global client with default credentials
+            db = client[database_name]
+        
+        collection = db[collection_name]
+        
+        if projection:
+            cursor = collection.find(query, projection)
+        else:
+            cursor = collection.find(query)
+        
+        if limit > 0:
+            cursor = cursor.limit(limit)
+        
+        results = list(cursor)
+        
+        # Close custom client if it was created
+        if username and password:
+            custom_client.close()
+        
+        return results
+    except Exception as e:
+        print(f"❌ Error executing query: {e}")
+        return []
+
+print("✅ Generic query function defined.")
+
 # Helper function to get hotel name
 def get_hotel_name_from_id(hotel_id_val):
     if not hotel_id_val:
@@ -306,6 +373,65 @@ def search_reviews_by_image_and_hotel(hotel_id):
     return jsonify(comments)
 
 print("✅ Review search API endpoints defined.")
+
+# ===== GENERIC QUERY ENDPOINT =====
+
+@app.route('/api/query', methods=['POST'])
+def generic_query():
+    """
+    Generic query endpoint.
+    
+    Request body (JSON):
+    {
+        "database": "Hotel",
+        "collection": "hotel",
+        "query": {"name": "Hotel Example"},  // Optional
+        "projection": {"name": 1, "_id": 0},  // Optional
+        "limit": 10,  // Optional
+        "username": "custom_user",  // Optional - uses default if not provided
+        "password": "custom_pass"  // Optional - required if username is provided
+    }
+    """
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "Request body is required."}), 400
+    
+    database_name = data.get('database')
+    collection_name = data.get('collection')
+    
+    if not database_name or not collection_name:
+        return jsonify({"error": "Both 'database' and 'collection' are required."}), 400
+    
+    query = data.get('query', {})
+    projection = data.get('projection')
+    limit = data.get('limit', 0)
+    username = data.get('username')
+    password = data.get('password')
+    
+    print(f"\n🔍 [GENERIC QUERY]")
+    print(f"   Database: {database_name}")
+    print(f"   Collection: {collection_name}")
+    print(f"   Query: {query}")
+    print(f"   Projection: {projection}")
+    print(f"   Limit: {limit}")
+    print(f"   Custom User: {username if username else 'Using default'}")
+    
+    try:
+        results = execute_query(database_name, collection_name, query, projection, limit, username, password)
+        print(f"✅ Query returned {len(results)} documents")
+        
+        # Convert ObjectId to string for JSON serialization
+        for doc in results:
+            if '_id' in doc:
+                doc['_id'] = str(doc['_id'])
+        
+        return jsonify(results)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+print("✅ Generic query API endpoint defined.")
 
 # ===== HOTEL IMAGE SEARCH ENDPOINTS =====
 
