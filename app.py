@@ -5,11 +5,21 @@ from PIL import Image
 from io import BytesIO
 import numpy as np
 import torch
-from transformers import CLIPProcessor, CLIPModel
+from transformers import CLIPProcessor, CLIPModel, CLIPTokenizer, CLIPModel
 from bson import ObjectId
 import gridfs
 from urllib.parse import quote_plus
+from groq import Groq
+from dotenv import load_dotenv
+import os
+from sklearn.metrics.pairwise import cosine_similarity
+import time
 
+load_dotenv()
+
+# Configuration
+GROQ_KEY = os.environ.get("GROQ_API_KEY")
+groq_client = Groq(api_key=GROQ_KEY)
 # Configuration
 USER = "juanyaca2006_db_user"
 PASS = "juanmanuel07"
@@ -565,6 +575,188 @@ def search_hotels_by_image_and_hotel(hotel_id_param):
         })
 
     return jsonify(processed_results)
+
+
+# =========================================================
+# =============== LLM 01/12/25 ============================
+# =========================================================
+
+# =========================================================
+#  ============ Endpoint RAG por texto ====================
+# =========================================================
+clip_tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32")
+clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+
+def clip_truncate_text(text, max_tokens=75):
+    # Tokenizamos para saber cuántos tokens tiene
+    tokens = clip_tokenizer(
+        text,
+        truncation=True,
+        max_length=max_tokens,
+        return_tensors="pt",
+        add_special_tokens=True
+    )
+
+    # Reconstruimos el texto truncado a partir de los tokens
+    ids = tokens["input_ids"][0]
+    trunc_text = clip_tokenizer.decode(ids, skip_special_tokens=True)
+
+    return trunc_text
+def precision_score_rag(response_text, docs):
+    # Truncado real por tokens
+    textos_docs = [clip_truncate_text(doc.get("comentario", "")) for doc in docs]
+    resp_truncada = clip_truncate_text(response_text)
+
+    textos = textos_docs + [resp_truncada]
+
+    embeddings = embed_texts_clip(textos)
+
+    emb_docs = embeddings[:-1]
+    emb_resp = embeddings[-1].reshape(1, -1)
+
+    similitudes = cosine_similarity(emb_docs, emb_resp).flatten()
+
+    return float(similitudes.mean())
+
+
+# Crea un pipeline de HuggingFace para generación
+
+def generate_rag_response_groq(query_text, docs):
+    """
+    Genera respuesta usando Groq Llama-3.1.
+    """
+    cuerpo_docs = "\n".join(
+        [f"{i+1}. {doc.get('comentario', '')}" for i, doc in enumerate(docs)]
+    )
+
+    prompt = f"""
+    Responde la pregunta de forma clara usando ÚNICAMENTE estos documentos:
+
+    Documentos:
+    {cuerpo_docs}
+
+    Pregunta:
+    {query_text}
+
+    da una respuesta de forma natural
+    """
+
+    completion = groq_client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {"role": "system", "content": "Eres un asistente experto que responde basándose solo en los documentos."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.1
+    )
+
+    return completion.choices[0].message.content
+
+@app.route('/api/rag/reviews/by-text', methods=['POST'])
+def rag_reviews_by_text_groq():
+    total_start = time.time()
+
+    data = request.get_json()
+    query_text = data.get('query', '')
+
+    if not query_text:
+        return jsonify({"error": "Query is required."}), 400
+
+    # 1️⃣ Embedding
+    t0 = time.time()
+    query_embedding = embed_texts_clip([query_text])[0].tolist()
+    embedding_time = time.time() - t0
+
+    # 2️⃣ Vector search top-10
+    t1 = time.time()
+    top_docs = vector_search_helper(
+        collection=coll_resenas,
+        embedding_field="comentario_embedding",
+        query_embedding=query_embedding,
+        k=10
+    )
+    search_time = time.time() - t1
+
+    # 3️⃣ Respuesta Groq
+    t2 = time.time()
+    respuesta = generate_rag_response_groq(query_text, top_docs)
+    llm_time = time.time() - t2
+
+    # 4️⃣ Precisión semántica
+    precision = precision_score_rag(respuesta, top_docs)
+
+    total_time = time.time() - total_start
+
+    return jsonify({
+        "respuesta": respuesta,
+        "metricas": {
+            "embedding_ms": round(embedding_time * 1000, 2),
+            "vector_search_ms": round(search_time * 1000, 2),
+            "llm_ms": round(llm_time * 1000, 2),
+            "precision_score": round(precision, 4),
+            "total_ms": round(total_time * 1000, 2)
+        },
+        "documentos_usados": [
+            {"_id": str(doc["_id"]), "comentario": doc.get("comentario")}
+            for doc in top_docs
+        ]
+    })
+    
+# =========================================================    
+# ================ Endpoint RAG por imagen ================
+# =========================================================
+@app.route('/api/rag/reviews/by-image', methods=['POST'])
+def rag_reviews_by_image_groq():
+    total_start = time.time()
+
+    if 'image' not in request.files:
+        return jsonify({"error": "No image provided."}), 400
+
+    file = request.files['image']
+    img = Image.open(BytesIO(file.read())).convert("RGB")
+
+    # 1️⃣ Embedding imagen
+    t0 = time.time()
+    query_embedding = embed_images_clip([img])[0].tolist()
+    embedding_time = time.time() - t0
+
+    # 2️⃣ Vector search
+    t1 = time.time()
+    top_docs = vector_search_helper(
+        collection=coll_resenas,
+        embedding_field="comentario_embedding",
+        query_embedding=query_embedding,
+        k=10
+    )
+    search_time = time.time() - t1
+
+    # 3️⃣ Respuesta Groq
+    t2 = time.time()
+    prompt_base = "Describe la imagen utilizando solo reseñas similares."
+    respuesta = generate_rag_response_groq(prompt_base, top_docs)
+    llm_time = time.time() - t2
+
+    # 4️⃣ Precisión semántica
+    precision = precision_score_rag(respuesta, top_docs)
+
+    total_time = time.time() - total_start
+
+    return jsonify({
+        "respuesta": respuesta,
+        "metricas": {
+            "embedding_ms": round(embedding_time * 1000, 2),
+            "vector_search_ms": round(search_time * 1000, 2),
+            "llm_ms": round(llm_time * 1000, 2),
+            "precision_score": round(precision, 4),
+            "total_ms": round(total_time * 1000, 2)
+        },
+        "documentos_usados": [
+            {"_id": str(doc["_id"]), "comentario": doc.get("comentario")}
+            for doc in top_docs
+        ]
+    })
+
+
 
 print("✅ Hotel image search API endpoints defined.")
 
