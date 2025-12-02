@@ -1,7 +1,7 @@
-// MongoDB Change Stream - Monitor ALL events in real-time using Node.js
+// MongoDB Change Stream - Monitor critical reviews in real-time using Node.js
 const { MongoClient } = require("mongodb");
 
-// MongoDB connection configuration
+// MongoDB connection configuration (USE YOUR ACTUAL CREDENTIALS)
 const USER = "juanyaca2006_db_user";
 const PASS = "juanmanuel07";
 const CLUSTER = "cluster0.563va5d.mongodb.net";
@@ -14,11 +14,23 @@ const uri = `mongodb+srv://${USER}:${PASS}@${CLUSTER}/${DBNAME}?retryWrites=true
 // Define the collection to watch
 const collectionName = "resena";
 
-// Define the aggregation pipeline -监控所有事件
+// Define the aggregation pipeline - Monitor reviews with puntuacion <= 2
 const pipeline = [
   {
     $match: {
-      operationType: { $in: ["insert", "update", "delete"] },
+      $and: [
+        {
+          operationType: { $in: ["insert", "update", "replace"] },
+        },
+        {
+          $or: [
+            // Para inserciones/reemplazos - verificamos el documento completo
+            { "fullDocument.puntuacion": { $lte: 2 } },
+            // Para actualizaciones - verificamos si 'puntuacion' fue cambiada a un valor crítico
+            { "updateDescription.updatedFields.puntuacion": { $lte: 2 } },
+          ],
+        },
+      ],
     },
   },
 ];
@@ -29,7 +41,7 @@ async function monitorChangeStream() {
   try {
     // Connect to MongoDB
     await client.connect();
-    console.log("✅ Connected to MongoDB");
+    console.log("✅ Conectado a MongoDB");
 
     const db = client.db(DBNAME);
     const collection = db.collection(collectionName);
@@ -38,41 +50,47 @@ async function monitorChangeStream() {
     const changeStream = collection.watch(pipeline);
 
     console.log(
-      `✅ Monitoring ALL change events on '${DBNAME}.${collectionName}' collection...`
+      `✅ Monitoreando reseñas críticas (puntuación <= 2) en '${DBNAME}.${collectionName}'...`
     );
-    console.log("Press Ctrl+C to stop monitoring\n");
+    console.log("Presiona Ctrl+C para detener el monitoreo\n");
 
     // Listen to change events
     changeStream.on("change", (change) => {
       console.log("─────────────────────────────────────────");
-      console.log(`⚡ Event Type: ${change.operationType}`);
+      console.log(`⚡ Evento Crítico Detectado: ${change.operationType}`);
       console.log(`📅 Timestamp: ${new Date().toISOString()}`);
       console.log(`🆔 Document ID: ${change.documentKey._id}`);
 
-      if (change.operationType === "insert") {
-        console.log("📄 New Document:");
-        console.log(JSON.stringify(change.fullDocument, null, 2));
-      } else if (change.operationType === "update") {
-        console.log("🔄 Updated Fields:");
+      const changeType = change.operationType;
+
+      if (changeType === "insert" || changeType === "replace") {
+        console.log("❌ Nueva Reseña CRÍTICA registrada:");
+        console.log(`   ID Reseña: ${change.fullDocument.idResena}`);
+        console.log(`   Puntuación: ${change.fullDocument.puntuacion}`);
+        console.log(
+          `   Comentario: ${
+            change.fullDocument.comentario
+              ? change.fullDocument.comentario.substring(0, 80) + "..."
+              : "N/A"
+          }`
+        );
+        console.log("\n📄 Documento Completo:");
+        // Muestra solo los campos relevantes para una reseña
+        const criticalReviewData = {
+          idResena: change.fullDocument.idResena,
+          puntuacion: change.fullDocument.puntuacion,
+          comentario: change.fullDocument.comentario,
+          idReservaHabitacion: change.fullDocument.idReservaHabitacion,
+        };
+        console.log(JSON.stringify(criticalReviewData, null, 2));
+      } else if (changeType === "update") {
+        console.log("🔄 Documento Actualizado (Puntuación Crítica):");
+        const updatedScore = change.updateDescription.updatedFields.puntuacion;
+        console.log(`   Puntuación Actualizada a: ${updatedScore}`);
+        console.log("   Campos Actualizados:");
         console.log(
           JSON.stringify(change.updateDescription.updatedFields, null, 2)
         );
-        if (
-          change.updateDescription.removedFields &&
-          change.updateDescription.removedFields.length > 0
-        ) {
-          console.log(
-            `🗑️  Removed Fields: ${change.updateDescription.removedFields.join(
-              ", "
-            )}`
-          );
-        }
-        if (change.fullDocument) {
-          console.log("📄 Full Document After Update:");
-          console.log(JSON.stringify(change.fullDocument, null, 2));
-        }
-      } else if (change.operationType === "delete") {
-        console.log(`🗑️  Deleted Document ID: ${change.documentKey._id}`);
       }
 
       console.log("─────────────────────────────────────────\n");
@@ -84,15 +102,15 @@ async function monitorChangeStream() {
 
     // Handle graceful shutdown
     process.on("SIGINT", async () => {
-      console.log("\n👋 Closing change stream...");
+      console.log("\n👋 Cerrando change stream...");
       await changeStream.close();
       await client.close();
-      console.log("✅ Change stream monitoring stopped.");
+      console.log("✅ Monitoreo de Change Stream detenido.");
       process.exit(0);
     });
   } catch (error) {
-    console.error(`❌ Connection Error: ${error.message}`);
-    await client.close();
+    console.error(`❌ Error de Conexión: ${error.message}`);
+    if (client) await client.close();
     process.exit(1);
   }
 }

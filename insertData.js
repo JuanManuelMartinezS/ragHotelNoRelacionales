@@ -4,78 +4,171 @@ async function insertResenas() {
   try {
     const db = await database.connect();
 
-    console.log("\n⭐ INSERTANDO RESEÑAS\n");
+    console.log("\n⭐ INSERTANDO RESEÑAS ÚNICAS\n");
     console.log("=".repeat(70));
 
     // Limpiar colección existente
     await db.collection("resena").deleteMany({});
 
-    // Plantillas de comentarios por puntuación
-    const comentarios = {
+    // Plantillas base de comentarios por puntuación
+    const comentariosBase = {
       5: [
-        "Excelente hotel, superó todas nuestras expectativas. Volveremos sin duda.",
-        "Servicio impecable, instalaciones de primera. Una experiencia inolvidable.",
-        "Todo fue perfecto desde el check-in hasta el check-out. Altamente recomendado.",
-        "La mejor estadía que hemos tenido. El personal es excepcional.",
-        "Increíble atención al detalle. Las habitaciones son espectaculares.",
-        "Experiencia de 5 estrellas en todo sentido. Vale cada peso.",
-        "Nos encantó todo, desde la comida hasta las instalaciones. Excelente.",
-        "Personal muy atento y profesional. Las amenidades son de lujo.",
-        "Ubicación perfecta y servicios excepcionales. Muy recomendable.",
-        "Una joya de hotel. Todo estuvo impecable durante nuestra estadía.",
+        "Excelente hotel, superó todas nuestras expectativas",
+        "Servicio impecable, instalaciones de primera",
+        "Todo fue perfecto desde el check-in hasta el check-out",
+        "La mejor estadía que hemos tenido",
+        "Increíble atención al detalle",
+        "Experiencia de 5 estrellas en todo sentido",
+        "Nos encantó todo, desde la comida hasta las instalaciones",
+        "Personal muy atento y profesional",
+        "Ubicación perfecta y servicios excepcionales",
+        "Una joya de hotel, todo estuvo impecable",
       ],
       4: [
-        "Muy buena experiencia en general. Pequeños detalles por mejorar.",
-        "Hotel agradable con buen servicio. Relación calidad-precio aceptable.",
-        "Buena estadía, habitaciones cómodas. El desayuno podría ser mejor.",
-        "Nos gustó mucho, aunque el wifi era un poco lento.",
-        "Instalaciones limpias y personal amable. Buena opción.",
-        "Recomendable, aunque el check-in tomó más tiempo del esperado.",
-        "Habitación cómoda y limpia. El restaurante tiene buena comida.",
-        "Buena ubicación y servicios correctos. Volveríamos.",
-        "Estadía agradable, personal servicial. Algunas mejoras menores pendientes.",
-        "Buen hotel en general. La piscina estaba muy bien mantenida.",
+        "Muy buena experiencia en general",
+        "Hotel agradable con buen servicio",
+        "Buena estadía, habitaciones cómodas",
+        "Nos gustó mucho, aunque el wifi era un poco lento",
+        "Instalaciones limpias y personal amable",
+        "Recomendable, aunque el check-in tomó más tiempo",
+        "Habitación cómoda y limpia",
+        "Buena ubicación y servicios correctos",
+        "Estadía agradable, personal servicial",
+        "Buen hotel en general, la piscina estaba muy bien",
       ],
       3: [
-        "Experiencia normal, nada excepcional. Cumple lo básico.",
-        "Precio justo por lo que ofrece. Habitación estándar.",
-        "Aceptable para una noche. No es memorable pero funciona.",
-        "Instalaciones algo antiguas pero limpias. Personal correcto.",
-        "Esperaba un poco más por el precio. No estuvo mal.",
-        "Cumple con lo básico. La habitación necesita renovación.",
-        "Servicio promedio. La ubicación es su mejor punto.",
-        "Nada especial pero tampoco malo. Hotel funcional.",
-        "Relación calidad-precio regular. Hay mejores opciones.",
-        "Estadía sin sorpresas. Todo bastante estándar.",
+        "Experiencia normal, nada excepcional",
+        "Precio justo por lo que ofrece",
+        "Aceptable para una noche, no es memorable",
+        "Instalaciones algo antiguas pero limpias",
+        "Esperaba un poco más por el precio",
+        "Cumple con lo básico, la habitación necesita renovación",
+        "Servicio promedio, la ubicación es su mejor punto",
+        "Nada especial pero tampoco malo",
+        "Relación calidad-precio regular",
+        "Estadía sin sorpresas, todo bastante estándar",
       ],
       2: [
-        "Decepcionante. Las fotos no reflejan la realidad.",
-        "Habitación pequeña y ruidosa. No volveríamos.",
-        "Servicio deficiente y limpieza cuestionable.",
-        "No cumplió nuestras expectativas. Varios problemas.",
-        "Instalaciones descuidadas. El personal no fue muy atento.",
-        "Mala experiencia. Ruido excesivo durante la noche.",
-        "No recomendable. Mejor buscar otras opciones.",
-        "Precio elevado para la calidad ofrecida. Insatisfecho.",
-        "Muchas cosas por mejorar. No vale la pena.",
-        "Habitación con mantenimiento deficiente. Decepcionante.",
+        "Decepcionante, las fotos no reflejan la realidad",
+        "Habitación pequeña y ruidosa",
+        "Servicio deficiente y limpieza cuestionable",
+        "No cumplió nuestras expectativas",
+        "Instalaciones descuidadas, personal no muy atento",
+        "Mala experiencia, ruido excesivo durante la noche",
+        "No recomendable, mejor buscar otras opciones",
+        "Precio elevado para la calidad ofrecida",
+        "Muchas cosas por mejorar",
+        "Habitación con mantenimiento deficiente",
       ],
       1: [
-        "Pésima experiencia. No recomiendo este hotel para nada.",
-        "Terrible. Problemas desde el inicio hasta el final.",
-        "Muy mala atención. Las instalaciones están en mal estado.",
-        "Nunca volveré. Una de las peores experiencias hoteleras.",
-        "Inaceptable para el precio. Todo estuvo mal.",
-        "Deplorable. Limpieza inexistente y servicio pésimo.",
-        "No puedo recomendar este lugar. Fue una pesadilla.",
-        "Muy decepcionados. Esperábamos mucho más.",
-        "Horrible experiencia. Pedimos cambio de habitación y no pudieron.",
-        "El peor hotel en el que nos hemos hospedado. Desastroso.",
+        "Pésima experiencia, no recomiendo este hotel",
+        "Terrible, problemas desde el inicio hasta el final",
+        "Muy mala atención, instalaciones en mal estado",
+        "Nunca volveré, una de las peores experiencias",
+        "Inaceptable para el precio, todo estuvo mal",
+        "Deplorable, limpieza inexistente y servicio pésimo",
+        "No puedo recomendar este lugar",
+        "Muy decepcionados, esperábamos mucho más",
+        "Horrible experiencia, no pudieron resolver nada",
+        "El peor hotel en el que nos hemos hospedado",
       ],
     };
 
-    // Generar 200 reseñas
+    // Frases complementarias para crear variaciones
+    const complementos = {
+      positivos: [
+        "El desayuno fue excepcional.",
+        "La vista desde la habitación era espectacular.",
+        "El spa es maravilloso.",
+        "La limpieza es impecable.",
+        "El personal siempre con una sonrisa.",
+        "La piscina estaba perfecta.",
+        "El restaurante tiene comida deliciosa.",
+        "Las camas son muy cómodas.",
+        "El aire acondicionado funciona perfecto.",
+        "La decoración es hermosa.",
+        "Volveremos sin duda.",
+        "Altamente recomendado.",
+        "Vale cada peso.",
+        "Superó nuestras expectativas.",
+        "Todo estuvo a la altura.",
+      ],
+      neutros: [
+        "El desayuno es básico.",
+        "La habitación es estándar.",
+        "El wifi es funcional.",
+        "La ubicación es conveniente.",
+        "El precio es razonable.",
+        "Las instalaciones están bien.",
+        "El personal es correcto.",
+        "Cumple con lo esperado.",
+        "Es una opción viable.",
+        "Nada fuera de lo común.",
+      ],
+      negativos: [
+        "El ruido no nos dejó dormir.",
+        "La limpieza dejó mucho que desear.",
+        "El personal fue poco amable.",
+        "Las instalaciones están viejas.",
+        "No volveremos.",
+        "Hay mejores opciones por el mismo precio.",
+        "La habitación olía mal.",
+        "El aire acondicionado no funcionaba bien.",
+        "El wifi era muy lento.",
+        "Esperábamos más.",
+      ],
+    };
+
+    // Función para generar comentario único
+    function generarComentarioUnico(puntuacion, usados) {
+      let intentos = 0;
+      let comentario = "";
+
+      while (intentos < 100) {
+        // Seleccionar base aleatoria
+        const bases = comentariosBase[puntuacion];
+        const base = bases[Math.floor(Math.random() * bases.length)];
+
+        // Seleccionar complementos según puntuación
+        let tipoComplemento;
+        if (puntuacion >= 4) tipoComplemento = "positivos";
+        else if (puntuacion === 3) tipoComplemento = "neutros";
+        else tipoComplemento = "negativos";
+
+        const complementosDisponibles = complementos[tipoComplemento];
+
+        // Agregar 1-3 complementos aleatorios
+        const numComplementos = Math.floor(Math.random() * 3) + 1;
+        const complementosSeleccionados = [];
+
+        for (let i = 0; i < numComplementos; i++) {
+          const idx = Math.floor(
+            Math.random() * complementosDisponibles.length
+          );
+          complementosSeleccionados.push(complementosDisponibles[idx]);
+        }
+
+        // Construir comentario final
+        comentario = `${base}. ${complementosSeleccionados.join(" ")}`;
+
+        // Verificar si es único
+        if (!usados.has(comentario)) {
+          usados.add(comentario);
+          return comentario;
+        }
+
+        intentos++;
+      }
+
+      // Si no se pudo generar único, agregar timestamp
+      comentario = `${comentario} (Ref: ${Date.now()}-${Math.random()})`;
+      usados.add(comentario);
+      return comentario;
+    }
+
+    // Generar 200 reseñas únicas
     const resenasArray = [];
+    const comentariosUsados = new Set();
     const reservasDisponibles = [
       3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009, 3010,
     ];
@@ -84,18 +177,14 @@ async function insertResenas() {
       // Distribución de puntuaciones (más alta en 4 y 5 estrellas)
       let puntuacion;
       const rand = Math.random();
-      if (rand < 0.4) puntuacion = 5; // 40% de 5 estrellas
-      else if (rand < 0.7) puntuacion = 4; // 30% de 4 estrellas
-      else if (rand < 0.85) puntuacion = 3; // 15% de 3 estrellas
-      else if (rand < 0.95) puntuacion = 2; // 10% de 2 estrellas
-      else puntuacion = 1; // 5% de 1 estrella
+      if (rand < 0.35) puntuacion = 5; // 35% de 5 estrellas
+      else if (rand < 0.65) puntuacion = 4; // 30% de 4 estrellas
+      else if (rand < 0.8) puntuacion = 3; // 15% de 3 estrellas
+      else if (rand < 0.92) puntuacion = 2; // 12% de 2 estrellas
+      else puntuacion = 1; // 8% de 1 estrella
 
-      // Seleccionar comentario aleatorio según puntuación
-      const comentariosDisponibles = comentarios[puntuacion];
-      const comentario =
-        comentariosDisponibles[
-          Math.floor(Math.random() * comentariosDisponibles.length)
-        ];
+      // Generar comentario único
+      const comentario = generarComentarioUnico(puntuacion, comentariosUsados);
 
       // Asignar a una reserva aleatoria
       const idReservaHabitacion =
@@ -109,18 +198,42 @@ async function insertResenas() {
         comentario: comentario,
         puntuacion: puntuacion,
       });
+
+      if (i % 50 === 0) {
+        console.log(`   ⏳ Generadas ${i}/200 reseñas únicas...`);
+      }
     }
 
     // Insertar todas las reseñas
+    console.log("\n   💾 Insertando en base de datos...");
     const resenas = await db.collection("resena").insertMany(resenasArray);
 
     console.log(
       `   ✅ ${resenas.insertedCount} reseñas insertadas exitosamente`
     );
 
+    // Verificar unicidad
+    const pipeline = [
+      {
+        $group: {
+          _id: "$comentario",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $match: { count: { $gt: 1 } },
+      },
+    ];
+
+    const duplicados = await db
+      .collection("resena")
+      .aggregate(pipeline)
+      .toArray();
+    console.log(`   🔍 Comentarios duplicados: ${duplicados.length}`);
+
     // Mostrar resumen por puntuación
     console.log("\n📊 RESUMEN POR PUNTUACIÓN:");
-    const pipeline = [
+    const resumenPipeline = [
       {
         $group: {
           _id: "$puntuacion",
@@ -130,9 +243,17 @@ async function insertResenas() {
       { $sort: { _id: -1 } },
     ];
 
-    const resumen = await db.collection("resena").aggregate(pipeline).toArray();
+    const resumen = await db
+      .collection("resena")
+      .aggregate(resumenPipeline)
+      .toArray();
+
     resumen.forEach((r) => {
-      console.log(`   ⭐ ${r._id} estrellas: ${r.cantidad} reseñas`);
+      const estrellas = "⭐".repeat(r._id);
+      const porcentaje = ((r.cantidad / 200) * 100).toFixed(1);
+      console.log(
+        `   ${estrellas} ${r._id} estrellas: ${r.cantidad} reseñas (${porcentaje}%)`
+      );
     });
 
     // Calcular promedio general
@@ -157,7 +278,8 @@ async function insertResenas() {
     }
 
     console.log("\n" + "=".repeat(70));
-    console.log("   ✅ Reseñas cargadas completamente\n");
+    console.log("   ✅ Reseñas únicas cargadas completamente");
+    console.log("   💡 Siguiente paso: Generar embeddings con Python\n");
   } catch (error) {
     console.error("❌ Error al insertar reseñas:", error);
   } finally {
