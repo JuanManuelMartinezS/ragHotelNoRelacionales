@@ -5,11 +5,21 @@ from PIL import Image
 from io import BytesIO
 import numpy as np
 import torch
-from transformers import CLIPProcessor, CLIPModel
+from transformers import CLIPProcessor, CLIPModel, CLIPTokenizer, CLIPModel
 from bson import ObjectId
 import gridfs
 from urllib.parse import quote_plus
+from groq import Groq
+from dotenv import load_dotenv
+import os
+from sklearn.metrics.pairwise import cosine_similarity
+import time
 
+load_dotenv()
+
+# Configuration
+GROQ_KEY = os.environ.get("GROQ_API_KEY")
+groq_client = Groq(api_key=GROQ_KEY)
 # Configuration
 USER = "juanyaca2006_db_user"
 PASS = "juanmanuel07"
@@ -77,7 +87,7 @@ def vector_search_helper(
     query_embedding,
     k=5,
     filters=None,
-    search_index="vector_index_1",
+    search_index="vector_index",
     use_native_vector_search=True
 ):
     """
@@ -238,13 +248,25 @@ def get_hotel_name_from_id(hotel_id_val):
 
 # ===== REVIEW SEARCH ENDPOINTS =====
 
-@app.route('/api/reviews/search/by-text', methods=['GET'])
+
+@app.route('/api/reviews/search/by-text', methods=['POST'])
 def search_reviews_by_text():
-    query_text = request.args.get('query', '')
+    # Obtener datos del body
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "Request body is required."}), 400
+    
+    query_text = data.get('query', '')
+    min_score = float(data.get('min_score', 0.5))  # Umbral de similitud
+    k = int(data.get('k', 4))  # Buscar más para compensar duplicados
+    
     print(f"\n🔍 [REVIEW SEARCH] Query text: '{query_text}'")
+    print(f"   - Min score threshold: {min_score}")
+    print(f"   - K (before dedup): {k}")
     
     if not query_text:
-        return jsonify({"error": "Query text is required."}), 400
+        return jsonify({"error": "Query text is required in body."}), 400
 
     # Generate embedding
     print(f"🧠 Generating embedding for query...")
@@ -254,39 +276,33 @@ def search_reviews_by_text():
     # Perform vector search
     print(f"🔎 Searching in collection: {coll_resenas.name}")
     print(f"   - Field: comentario_embedding")
-    print(f"   - K: 10")
+    print(f"   - K: {k}")
     
     try:
+        # 🔍 Verificar qué índice existe en MongoDB Atlas
+        print(f"🔎 Intentando búsqueda con índice 'vector_index_1'...")
+        
         results = vector_search_helper(
             collection=coll_resenas,
             embedding_field="comentario_embedding",
             query_embedding=query_embedding,
-            k=10
+            k=k,
+            search_index="vector_index"  # 🔥 Asegúrate que este nombre coincida
         )
         print(f"📊 Vector search returned {len(results)} documents")
         
-        # Debug: Print first result structure
-        if results:
-            print(f"📄 First result keys: {list(results[0].keys())}")
-            print(f"📄 First result: {results[0]}")
-        else:
+        if not results:
             print("⚠️  No results found from vector search")
-            # Check if collection has documents
             doc_count = coll_resenas.count_documents({})
             print(f"ℹ️  Total documents in collection: {doc_count}")
             
-            # Check if any document has the embedding field
             sample_doc = coll_resenas.find_one({"comentario_embedding": {"$exists": True}})
             if sample_doc:
                 print(f"✅ Found document with comentario_embedding field")
-                print(f"   Sample _id: {sample_doc.get('_id')}")
-                print(f"   Has comentario: {bool(sample_doc.get('comentario'))}")
             else:
                 print(f"❌ No documents found with 'comentario_embedding' field")
-                # Check what fields exist
-                sample_any = coll_resenas.find_one()
-                if sample_any:
-                    print(f"   Available fields in a sample doc: {list(sample_any.keys())}")
+            
+            return jsonify([])
     
     except Exception as e:
         print(f"❌ Error during vector search: {e}")
@@ -294,11 +310,47 @@ def search_reviews_by_text():
         traceback.print_exc()
         return jsonify({"error": f"Search failed: {str(e)}"}), 500
 
-    comments = [doc.get('comentario') for doc in results if doc.get('comentario')]
-    print(f"💬 Extracted {len(comments)} comments from results")
+    # Process results: remove duplicates and filter by score
+    seen_comments = set()
+    unique_results = []
     
-    return jsonify(comments)
-
+    for doc in results:
+        comentario = doc.get('comentario')
+        score = doc.get('score', 0)
+        
+        # Skip if no comment or below threshold
+        if not comentario or score < min_score:
+            continue
+        
+        # Skip duplicates (normalize text for comparison)
+        comentario_normalized = comentario.strip().lower()
+        if comentario_normalized in seen_comments:
+            print(f"⚠️  Skipping duplicate comment (score: {score:.3f})")
+            continue
+        
+        seen_comments.add(comentario_normalized)
+        
+        # Get hotel name if hotel_id exists
+        hotel_name = "Unknown Hotel"
+        if doc.get('hotel_id'):
+            hotel_name = get_hotel_name_from_id(doc.get('hotel_id'))
+        
+        unique_results.append({
+            "comentario": comentario,
+            "score": round(score, 4),
+            "hotel_name": hotel_name,
+            "hotel_id": str(doc.get('hotel_id', '')),
+            "_id": str(doc.get('_id', ''))
+        })
+    
+    print(f"💬 Extracted {len(unique_results)} unique comments from {len(results)} results")
+    print(f"   - Duplicates removed: {len(results) - len(unique_results)}")
+    print(f"   - Score range: {min([r['score'] for r in unique_results]) if unique_results else 0:.3f} - {max([r['score'] for r in unique_results]) if unique_results else 0:.3f}")
+    
+    # Limit to top 10 unique results
+    unique_results = unique_results[:10]
+    
+    return jsonify(unique_results)
 @app.route('/api/reviews/search/by-text/<hotel_id>', methods=['GET'])
 def search_reviews_by_text_and_hotel(hotel_id):
     query_text = request.args.get('query', '')
@@ -372,66 +424,9 @@ def search_reviews_by_image_and_hotel(hotel_id):
     comments = [doc.get('comentario') for doc in results if doc.get('comentario')]
     return jsonify(comments)
 
-print("✅ Review search API endpoints defined.")
-
-# ===== GENERIC QUERY ENDPOINT =====
-
-@app.route('/api/query', methods=['POST'])
-def generic_query():
-    """
-    Generic query endpoint.
-    
-    Request body (JSON):
-    {
-        "database": "Hotel",
-        "collection": "hotel",
-        "query": {"name": "Hotel Example"},  // Optional
-        "projection": {"name": 1, "_id": 0},  // Optional
-        "limit": 10,  // Optional
-        "username": "custom_user",  // Optional - uses default if not provided
-        "password": "custom_pass"  // Optional - required if username is provided
-    }
-    """
-    data = request.get_json()
-    
-    if not data:
-        return jsonify({"error": "Request body is required."}), 400
-    
-    database_name = data.get('database')
-    collection_name = data.get('collection')
-    
-    if not database_name or not collection_name:
-        return jsonify({"error": "Both 'database' and 'collection' are required."}), 400
-    
-    query = data.get('query', {})
-    projection = data.get('projection')
-    limit = data.get('limit', 0)
-    username = data.get('username')
-    password = data.get('password')
-    
-    print(f"\n🔍 [GENERIC QUERY]")
-    print(f"   Database: {database_name}")
-    print(f"   Collection: {collection_name}")
-    print(f"   Query: {query}")
-    print(f"   Projection: {projection}")
-    print(f"   Limit: {limit}")
-    print(f"   Custom User: {username if username else 'Using default'}")
-    
-    try:
-        results = execute_query(database_name, collection_name, query, projection, limit, username, password)
-        print(f"✅ Query returned {len(results)} documents")
-        
-        # Convert ObjectId to string for JSON serialization
-        for doc in results:
-            if '_id' in doc:
-                doc['_id'] = str(doc['_id'])
-        
-        return jsonify(results)
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        return jsonify({"error": str(e)}), 500
 
 print("✅ Generic query API endpoint defined.")
+print("✅ CRUD endpoints (insert, update, delete) defined.")
 
 # ===== HOTEL IMAGE SEARCH ENDPOINTS =====
 
@@ -580,6 +575,188 @@ def search_hotels_by_image_and_hotel(hotel_id_param):
         })
 
     return jsonify(processed_results)
+
+
+# =========================================================
+# =============== LLM 01/12/25 ============================
+# =========================================================
+
+# =========================================================
+#  ============ Endpoint RAG por texto ====================
+# =========================================================
+clip_tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32")
+clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+
+def clip_truncate_text(text, max_tokens=75):
+    # Tokenizamos para saber cuántos tokens tiene
+    tokens = clip_tokenizer(
+        text,
+        truncation=True,
+        max_length=max_tokens,
+        return_tensors="pt",
+        add_special_tokens=True
+    )
+
+    # Reconstruimos el texto truncado a partir de los tokens
+    ids = tokens["input_ids"][0]
+    trunc_text = clip_tokenizer.decode(ids, skip_special_tokens=True)
+
+    return trunc_text
+def precision_score_rag(response_text, docs):
+    # Truncado real por tokens
+    textos_docs = [clip_truncate_text(doc.get("comentario", "")) for doc in docs]
+    resp_truncada = clip_truncate_text(response_text)
+
+    textos = textos_docs + [resp_truncada]
+
+    embeddings = embed_texts_clip(textos)
+
+    emb_docs = embeddings[:-1]
+    emb_resp = embeddings[-1].reshape(1, -1)
+
+    similitudes = cosine_similarity(emb_docs, emb_resp).flatten()
+
+    return float(similitudes.mean())
+
+
+# Crea un pipeline de HuggingFace para generación
+
+def generate_rag_response_groq(query_text, docs):
+    """
+    Genera respuesta usando Groq Llama-3.1.
+    """
+    cuerpo_docs = "\n".join(
+        [f"{i+1}. {doc.get('comentario', '')}" for i, doc in enumerate(docs)]
+    )
+
+    prompt = f"""
+    Responde la pregunta de forma clara usando ÚNICAMENTE estos documentos:
+
+    Documentos:
+    {cuerpo_docs}
+
+    Pregunta:
+    {query_text}
+
+    da una respuesta de forma natural
+    """
+
+    completion = groq_client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {"role": "system", "content": "Eres un asistente experto que responde basándose solo en los documentos."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.1
+    )
+
+    return completion.choices[0].message.content
+
+@app.route('/api/rag/reviews/by-text', methods=['POST'])
+def rag_reviews_by_text_groq():
+    total_start = time.time()
+
+    data = request.get_json()
+    query_text = data.get('query', '')
+
+    if not query_text:
+        return jsonify({"error": "Query is required."}), 400
+
+    # 1️⃣ Embedding
+    t0 = time.time()
+    query_embedding = embed_texts_clip([query_text])[0].tolist()
+    embedding_time = time.time() - t0
+
+    # 2️⃣ Vector search top-10
+    t1 = time.time()
+    top_docs = vector_search_helper(
+        collection=coll_resenas,
+        embedding_field="comentario_embedding",
+        query_embedding=query_embedding,
+        k=10
+    )
+    search_time = time.time() - t1
+
+    # 3️⃣ Respuesta Groq
+    t2 = time.time()
+    respuesta = generate_rag_response_groq(query_text, top_docs)
+    llm_time = time.time() - t2
+
+    # 4️⃣ Precisión semántica
+    precision = precision_score_rag(respuesta, top_docs)
+
+    total_time = time.time() - total_start
+
+    return jsonify({
+        "respuesta": respuesta,
+        "metricas": {
+            "embedding_ms": round(embedding_time * 1000, 2),
+            "vector_search_ms": round(search_time * 1000, 2),
+            "llm_ms": round(llm_time * 1000, 2),
+            "precision_score": round(precision, 4),
+            "total_ms": round(total_time * 1000, 2)
+        },
+        "documentos_usados": [
+            {"_id": str(doc["_id"]), "comentario": doc.get("comentario")}
+            for doc in top_docs
+        ]
+    })
+    
+# =========================================================    
+# ================ Endpoint RAG por imagen ================
+# =========================================================
+@app.route('/api/rag/reviews/by-image', methods=['POST'])
+def rag_reviews_by_image_groq():
+    total_start = time.time()
+
+    if 'image' not in request.files:
+        return jsonify({"error": "No image provided."}), 400
+
+    file = request.files['image']
+    img = Image.open(BytesIO(file.read())).convert("RGB")
+
+    # 1️⃣ Embedding imagen
+    t0 = time.time()
+    query_embedding = embed_images_clip([img])[0].tolist()
+    embedding_time = time.time() - t0
+
+    # 2️⃣ Vector search
+    t1 = time.time()
+    top_docs = vector_search_helper(
+        collection=coll_resenas,
+        embedding_field="comentario_embedding",
+        query_embedding=query_embedding,
+        k=10
+    )
+    search_time = time.time() - t1
+
+    # 3️⃣ Respuesta Groq
+    t2 = time.time()
+    prompt_base = "Describe la imagen utilizando solo reseñas similares."
+    respuesta = generate_rag_response_groq(prompt_base, top_docs)
+    llm_time = time.time() - t2
+
+    # 4️⃣ Precisión semántica
+    precision = precision_score_rag(respuesta, top_docs)
+
+    total_time = time.time() - total_start
+
+    return jsonify({
+        "respuesta": respuesta,
+        "metricas": {
+            "embedding_ms": round(embedding_time * 1000, 2),
+            "vector_search_ms": round(search_time * 1000, 2),
+            "llm_ms": round(llm_time * 1000, 2),
+            "precision_score": round(precision, 4),
+            "total_ms": round(total_time * 1000, 2)
+        },
+        "documentos_usados": [
+            {"_id": str(doc["_id"]), "comentario": doc.get("comentario")}
+            for doc in top_docs
+        ]
+    })
+
+
 
 print("✅ Hotel image search API endpoints defined.")
 
