@@ -39,7 +39,7 @@ app = Flask(__name__)
 # MongoDB connections
 client = MongoClient(MONGODB_URI)
 db_multimodal = client["multimodal_rag"]
-coll_images_ref = db_multimodal["media"]
+coll_images_ref = db_multimodal["images_ref"]
 
 db_hotel = client["Hotel"]
 coll_resenas = db_hotel["resena"]
@@ -49,7 +49,7 @@ coll_hotels = db_hotel["hotel"]
 fs = gridfs.GridFS(db_multimodal)
 
 print("✅ Flask app initialized.")
-print(f"✅ MongoDB connections established: 'multimodal_rag' (collection: '{coll_images_ref.name}'), 'CarrosAtlas' (collections: '{coll_resenas.name}', '{coll_hotels.name}')")
+print(f"✅ MongoDB connections established: 'multimodal_rag' (collection: '{coll_images_ref.name}'), 'Hotel' (collections: '{coll_resenas.name}', '{coll_hotels.name}')")
 
 # Load CLIP model
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -234,347 +234,38 @@ def get_hotel_name_from_id(hotel_id_val):
         return "N/A"
     
     try:
-        hotel_doc = coll_hotels.find_one({"_id": ObjectId(hotel_id_val)}, {"name": 1})
+        hotel_doc = coll_hotels.find_one({"_id": ObjectId(hotel_id_val)}, {"nombre": 1})
         if hotel_doc:
-            return hotel_doc.get("name", "Unknown Hotel")
+            return hotel_doc.get("nombre", "Unknown Hotel")
     except:
         pass
 
-    hotel_doc = coll_hotels.find_one({"hotel_id": hotel_id_val}, {"name": 1})
+    hotel_doc = coll_hotels.find_one({"idHotel": hotel_id_val}, {"nombre": 1})
     if hotel_doc:
-        return hotel_doc.get("name", "Unknown Hotel")
+        return hotel_doc.get("nombre", "Unknown Hotel")
         
     return "Unknown Hotel"
 
-# ===== REVIEW SEARCH ENDPOINTS =====
-
-
-@app.route('/api/reviews/search/by-text', methods=['POST'])
-def search_reviews_by_text():
-    # Obtener datos del body
-    data = request.get_json()
-    
-    if not data:
-        return jsonify({"error": "Request body is required."}), 400
-    
-    query_text = data.get('query', '')
-    min_score = float(data.get('min_score', 0.5))  # Umbral de similitud
-    k = int(data.get('k', 4))  # Buscar más para compensar duplicados
-    
-    print(f"\n🔍 [REVIEW SEARCH] Query text: '{query_text}'")
-    print(f"   - Min score threshold: {min_score}")
-    print(f"   - K (before dedup): {k}")
-    
-    if not query_text:
-        return jsonify({"error": "Query text is required in body."}), 400
-
-    # Generate embedding
-    print(f"🧠 Generating embedding for query...")
-    query_embedding = embed_texts_clip([query_text])[0].tolist()
-    print(f"✅ Embedding generated: shape={len(query_embedding)}, sample={query_embedding[:5]}")
-    
-    # Perform vector search
-    print(f"🔎 Searching in collection: {coll_resenas.name}")
-    print(f"   - Field: comentario_embedding")
-    print(f"   - K: {k}")
-    
+# Helper function to get image from GridFS
+def get_image_from_gridfs(file_id):
+    """Retrieve image from GridFS and return as PIL Image."""
     try:
-        # 🔍 Verificar qué índice existe en MongoDB Atlas
-        print(f"🔎 Intentando búsqueda con índice 'vector_index_1'...")
-        
-        results = vector_search_helper(
-            collection=coll_resenas,
-            embedding_field="comentario_embedding",
-            query_embedding=query_embedding,
-            k=k,
-            search_index="vector_index"  # 🔥 Asegúrate que este nombre coincida
-        )
-        print(f"📊 Vector search returned {len(results)} documents")
-        
-        if not results:
-            print("⚠️  No results found from vector search")
-            doc_count = coll_resenas.count_documents({})
-            print(f"ℹ️  Total documents in collection: {doc_count}")
-            
-            sample_doc = coll_resenas.find_one({"comentario_embedding": {"$exists": True}})
-            if sample_doc:
-                print(f"✅ Found document with comentario_embedding field")
-            else:
-                print(f"❌ No documents found with 'comentario_embedding' field")
-            
-            return jsonify([])
-    
+        grid_out = fs.get(ObjectId(file_id))
+        image_data = grid_out.read()
+        return Image.open(BytesIO(image_data)).convert("RGB")
     except Exception as e:
-        print(f"❌ Error during vector search: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": f"Search failed: {str(e)}"}), 500
+        print(f"Error retrieving image {file_id}: {e}")
+        return None
 
-    # Process results: remove duplicates and filter by score
-    seen_comments = set()
-    unique_results = []
-    
-    for doc in results:
-        comentario = doc.get('comentario')
-        score = doc.get('score', 0)
-        
-        # Skip if no comment or below threshold
-        if not comentario or score < min_score:
-            continue
-        
-        # Skip duplicates (normalize text for comparison)
-        comentario_normalized = comentario.strip().lower()
-        if comentario_normalized in seen_comments:
-            print(f"⚠️  Skipping duplicate comment (score: {score:.3f})")
-            continue
-        
-        seen_comments.add(comentario_normalized)
-        
-        # Get hotel name if hotel_id exists
-        hotel_name = "Unknown Hotel"
-        if doc.get('hotel_id'):
-            hotel_name = get_hotel_name_from_id(doc.get('hotel_id'))
-        
-        unique_results.append({
-            "comentario": comentario,
-            "score": round(score, 4),
-            "hotel_name": hotel_name,
-            "hotel_id": str(doc.get('hotel_id', '')),
-            "_id": str(doc.get('_id', ''))
-        })
-    
-    print(f"💬 Extracted {len(unique_results)} unique comments from {len(results)} results")
-    print(f"   - Duplicates removed: {len(results) - len(unique_results)}")
-    print(f"   - Score range: {min([r['score'] for r in unique_results]) if unique_results else 0:.3f} - {max([r['score'] for r in unique_results]) if unique_results else 0:.3f}")
-    
-    # Limit to top 10 unique results
-    unique_results = unique_results[:10]
-    
-    return jsonify(unique_results)
-@app.route('/api/reviews/search/by-text/<hotel_id>', methods=['GET'])
-def search_reviews_by_text_and_hotel(hotel_id):
-    query_text = request.args.get('query', '')
-    if not query_text:
-        return jsonify({"error": "Query text is required."}), 400
-
-    query_embedding = embed_texts_clip([query_text])[0].tolist()
-    filters = {"hotel_id": hotel_id}
-
-    results = vector_search_helper(
-        collection=coll_resenas,
-        embedding_field="comentario_embedding",
-        query_embedding=query_embedding,
-        k=10,
-        filters=filters
-    )
-
-    comments = [doc.get('comentario') for doc in results if doc.get('comentario')]
-    return jsonify(comments)
-
-@app.route('/api/reviews/search/by-image', methods=['POST'])
-def search_reviews_by_image():
-    if 'image' not in request.files:
-        return jsonify({"error": "No image file provided."}), 400
-
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({"error": "No selected file."}), 400
-    
-    try:
-        img = Image.open(BytesIO(file.read())).convert("RGB")
-    except Exception as e:
-        return jsonify({"error": f"Invalid image file: {e}"}), 400
-
-    query_embedding = embed_images_clip([img])[0].tolist()
-    results = vector_search_helper(
-        collection=coll_resenas,
-        embedding_field="comentario_embedding",
-        query_embedding=query_embedding,
-        k=10
-    )
-
-    comments = [doc.get('comentario') for doc in results if doc.get('comentario')]
-    return jsonify(comments)
-
-@app.route('/api/reviews/search/by-image/<hotel_id>', methods=['POST'])
-def search_reviews_by_image_and_hotel(hotel_id):
-    if 'image' not in request.files:
-        return jsonify({"error": "No image file provided."}), 400
-
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({"error": "No selected file."}), 400
-
-    try:
-        img = Image.open(BytesIO(file.read())).convert("RGB")
-    except Exception as e:
-        return jsonify({"error": f"Invalid image file: {e}"}), 400
-
-    query_embedding = embed_images_clip([img])[0].tolist()
-    filters = {"hotel_id": hotel_id}
-
-    results = vector_search_helper(
-        collection=coll_resenas,
-        embedding_field="comentario_embedding",
-        query_embedding=query_embedding,
-        k=10,
-        filters=filters
-    )
-
-    comments = [doc.get('comentario') for doc in results if doc.get('comentario')]
-    return jsonify(comments)
+# Helper function to convert image to base64
+def image_to_base64(pil_image):
+    """Convert PIL Image to base64 string."""
+    buffered = BytesIO()
+    pil_image.save(buffered, format="JPEG")
+    import base64
+    return base64.b64encode(buffered.getvalue()).decode()
 
 
-print("✅ Generic query API endpoint defined.")
-print("✅ CRUD endpoints (insert, update, delete) defined.")
-
-# ===== HOTEL IMAGE SEARCH ENDPOINTS =====
-
-@app.route('/api/hotels/search/by-text', methods=['GET'])
-def search_hotels_by_text():
-    query_text = request.args.get('query', '')
-    if not query_text:
-        return jsonify({"error": "Query text is required."}), 400
-
-    query_embedding = embed_texts_clip([query_text])[0].tolist()
-    
-    image_results = vector_search_helper(
-        collection=coll_images_ref,
-        embedding_field="image_embedding",
-        query_embedding=query_embedding,
-        k=10
-    )
-
-    processed_results = []
-    for img_doc in image_results:
-        hotel_id_from_image = img_doc.get("hotel_id")
-        hotel_name = get_hotel_name_from_id(hotel_id_from_image)
-        
-        processed_results.append({
-            "image_title": img_doc.get("title"),
-            "image_category": img_doc.get("category"),
-            "image_tags": img_doc.get("tags"),
-            "image_caption": img_doc.get("caption"),
-            "search_score": img_doc.get("score"),
-            "hotel_id": str(hotel_id_from_image) if hotel_id_from_image else None,
-            "hotel_name": hotel_name
-        })
-        
-    return jsonify(processed_results)
-
-@app.route('/api/hotels/search/by-text/<hotel_id_param>', methods=['GET'])
-def search_hotels_by_text_and_hotel(hotel_id_param):
-    query_text = request.args.get('query', '')
-    if not query_text:
-        return jsonify({"error": "Query text is required."}), 400
-
-    query_embedding = embed_texts_clip([query_text])[0].tolist()
-    filters = {"hotel_id": hotel_id_param}
-
-    image_results = vector_search_helper(
-        collection=coll_images_ref,
-        embedding_field="image_embedding",
-        query_embedding=query_embedding,
-        k=10,
-        filters=filters
-    )
-
-    hotel_name = get_hotel_name_from_id(hotel_id_param)
-
-    processed_results = []
-    for img_doc in image_results:
-        processed_results.append({
-            "image_title": img_doc.get("title"),
-            "image_category": img_doc.get("category"),
-            "image_tags": img_doc.get("tags"),
-            "image_caption": img_doc.get("caption"),
-            "search_score": img_doc.get("score"),
-            "hotel_id": str(hotel_id_param) if hotel_id_param else None,
-            "hotel_name": hotel_name
-        })
-        
-    return jsonify(processed_results)
-
-@app.route('/api/hotels/search/by-image', methods=['POST'])
-def search_hotels_by_image():
-    if 'image' not in request.files:
-        return jsonify({"error": "No image file provided."}), 400
-
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({"error": "No selected file."}), 400
-
-    try:
-        img = Image.open(BytesIO(file.read())).convert("RGB")
-    except Exception as e:
-        return jsonify({"error": f"Invalid image file: {e}"}), 400
-
-    query_embedding = embed_images_clip([img])[0].tolist()
-    
-    image_results = vector_search_helper(
-        collection=coll_images_ref,
-        embedding_field="image_embedding",
-        query_embedding=query_embedding,
-        k=10
-    )
-
-    processed_results = []
-    for img_doc in image_results:
-        hotel_id_from_image = img_doc.get("hotel_id")
-        hotel_name = get_hotel_name_from_id(hotel_id_from_image)
-        
-        processed_results.append({
-            "image_title": img_doc.get("title"),
-            "image_category": img_doc.get("category"),
-            "image_tags": img_doc.get("tags"),
-            "image_caption": img_doc.get("caption"),
-            "search_score": img_doc.get("score"),
-            "hotel_id": str(hotel_id_from_image) if hotel_id_from_image else None,
-            "hotel_name": hotel_name
-        })
-
-    return jsonify(processed_results)
-
-@app.route('/api/hotels/search/by-image/<hotel_id_param>', methods=['POST'])
-def search_hotels_by_image_and_hotel(hotel_id_param):
-    if 'image' not in request.files:
-        return jsonify({"error": "No image file provided."}), 400
-
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({"error": "No selected file."}), 400
-
-    try:
-        img = Image.open(BytesIO(file.read())).convert("RGB")
-    except Exception as e:
-        return jsonify({"error": f"Invalid image file: {e}"}), 400
-
-    query_embedding = embed_images_clip([img])[0].tolist()
-    filters = {"hotel_id": hotel_id_param}
-
-    image_results = vector_search_helper(
-        collection=coll_images_ref,
-        embedding_field="image_embedding",
-        query_embedding=query_embedding,
-        k=10,
-        filters=filters
-    )
-    
-    hotel_name = get_hotel_name_from_id(hotel_id_param)
-
-    processed_results = []
-    for img_doc in image_results:
-        processed_results.append({
-            "image_title": img_doc.get("title"),
-            "image_category": img_doc.get("category"),
-            "image_tags": img_doc.get("tags"),
-            "image_caption": img_doc.get("caption"),
-            "search_score": img_doc.get("score"),
-            "hotel_id": str(hotel_id_param) if hotel_id_param else None,
-            "hotel_name": hotel_name
-        })
-
-    return jsonify(processed_results)
 
 
 # =========================================================
@@ -644,7 +335,7 @@ def generate_rag_response_groq(query_text, docs):
     completion = groq_client.chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=[
-            {"role": "system", "content": "Eres un asistente experto que responde basándose solo en los documentos."},
+            {"role": "system", "content": "Eres un asistente para un sistema de hoteles, que responde usando únicamente los documentos proporcionados."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.1
@@ -702,9 +393,7 @@ def rag_reviews_by_text_groq():
         ]
     })
     
-# =========================================================    
-# ================ Endpoint RAG por imagen ================
-# =========================================================
+
 @app.route('/api/rag/reviews/by-image', methods=['POST'])
 def rag_reviews_by_image_groq():
     total_start = time.time()
@@ -758,8 +447,301 @@ def rag_reviews_by_image_groq():
 
 
 
-print("✅ Hotel image search API endpoints defined.")
+# =========================================================
+# ========== Endpoints multimodales para hoteles ==========
+# =========================================================
 
+# 1. Imagen a Imagen - Buscar imágenes de hoteles similares a una imagen subida
+@app.route('/api/hotel/images/by-image', methods=['POST'])
+def search_hotel_images_by_image():
+    total_start = time.time()
+    
+    if 'image' not in request.files:
+        return jsonify({"error": "No image file provided"}), 400
+    
+    file = request.files['image']
+    img = Image.open(BytesIO(file.read())).convert("RGB")
+    
+    # Embedding de la imagen
+    t0 = time.time()
+    query_embedding = embed_images_clip([img])[0].tolist()
+    embedding_time = time.time() - t0
+    
+    # Vector search en images_ref
+    t1 = time.time()
+    top_docs = vector_search_helper(
+        collection=coll_images_ref,
+        embedding_field="image_embedding",
+        query_embedding=query_embedding,
+        k=10,
+        search_index="vector_index"
+    )
+    search_time = time.time() - t1
+    
+    # Recuperar imágenes y nombres de hoteles
+    t2 = time.time()
+    results = []
+    for doc in top_docs:
+        hotel_name = get_hotel_name_from_id(doc.get("id_hotel"))
+        img_data = get_image_from_gridfs(doc.get("image_file_id"))
+        
+        result = {
+            "_id": str(doc["_id"]),
+            "hotel_name": hotel_name,
+            "hotel_id": str(doc.get("id_hotel")),
+            "score": doc.get("score", 0),
+            "title": doc.get("title", "")
+        }
+        
+        if img_data:
+            result["image_base64"] = image_to_base64(img_data)
+        
+        results.append(result)
+    
+    processing_time = time.time() - t2
+    total_time = time.time() - total_start
+    
+    return jsonify({
+        "results": results,
+        "metricas": {
+            "embedding_ms": round(embedding_time * 1000, 2),
+            "vector_search_ms": round(search_time * 1000, 2),
+            "processing_ms": round(processing_time * 1000, 2),
+            "total_ms": round(total_time * 1000, 2)
+        }
+    })
+
+# 2. Texto a Imagen - Buscar imágenes de hoteles usando descripción de texto
+@app.route('/api/hotel/images/by-text', methods=['POST'])
+def search_hotel_images_by_text():
+    total_start = time.time()
+    
+    data = request.get_json()
+    query_text = data.get('query', '')
+    
+    if not query_text:
+        return jsonify({"error": "No query text provided"}), 400
+    
+    # Embedding del texto
+    t0 = time.time()
+    query_embedding = embed_texts_clip([query_text])[0].tolist()
+    embedding_time = time.time() - t0
+    
+    # Vector search en images_ref
+    t1 = time.time()
+    top_docs = vector_search_helper(
+        collection=coll_images_ref,
+        embedding_field="image_embedding",
+        query_embedding=query_embedding,
+        k=10,
+        search_index="vector_index"
+    )
+    search_time = time.time() - t1
+    
+    # Recuperar imágenes y nombres de hoteles
+    t2 = time.time()
+    results = []
+    for doc in top_docs:
+        hotel_name = get_hotel_name_from_id(doc.get("id_hotel"))
+        img_data = get_image_from_gridfs(doc.get("image_file_id"))
+        
+        result = {
+            "_id": str(doc["_id"]),
+            "hotel_name": hotel_name,
+            "hotel_id": str(doc.get("id_hotel")),
+            "score": doc.get("score", 0),
+            "title": doc.get("title", "")
+        }
+        
+        if img_data:
+            result["image_base64"] = image_to_base64(img_data)
+        
+        results.append(result)
+    
+    processing_time = time.time() - t2
+    total_time = time.time() - total_start
+    
+    return jsonify({
+        "query": query_text,
+        "results": results,
+        "metricas": {
+            "embedding_ms": round(embedding_time * 1000, 2),
+            "vector_search_ms": round(search_time * 1000, 2),
+            "processing_ms": round(processing_time * 1000, 2),
+            "total_ms": round(total_time * 1000, 2)
+        }
+    })
+
+# 3. Imagen a Texto - Describir hoteles similares a una imagen usando LLM
+@app.route('/api/hotel/description/by-image', methods=['POST'])
+def describe_hotels_by_image():
+    total_start = time.time()
+    
+    if 'image' not in request.files:
+        return jsonify({"error": "No image file provided"}), 400
+    
+    file = request.files['image']
+    img = Image.open(BytesIO(file.read())).convert("RGB")
+    
+    # Embedding de la imagen
+    t0 = time.time()
+    query_embedding = embed_images_clip([img])[0].tolist()
+    embedding_time = time.time() - t0
+    
+    # Vector search en images_ref
+    t1 = time.time()
+    top_docs = vector_search_helper(
+        collection=coll_images_ref,
+        embedding_field="image_embedding",
+        query_embedding=query_embedding,
+        k=5,
+        search_index="vector_index"
+    )
+    search_time = time.time() - t1
+    
+    # Obtener información de hoteles
+    t2 = time.time()
+    hotel_info = []
+    for doc in top_docs:
+        hotel_name = get_hotel_name_from_id(doc.get("id_hotel"))
+        hotel_info.append(f"Hotel: {hotel_name}, Imagen: {doc.get('title', 'N/A')}")
+    
+    # Generar respuesta con LLM
+    hotel_list = "\n".join([f"{i+1}. {info}" for i, info in enumerate(hotel_info)])
+    
+    prompt = f"""
+    Basándote en estas imágenes de hoteles encontradas:
+    
+    {hotel_list}
+    
+    Describe qué tipo de hoteles son similares a la imagen proporcionada.
+    Menciona los nombres de los hoteles y sus características probables.
+    """
+    
+    completion = groq_client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {"role": "system", "content": "Eres un asistente experto en hoteles que describe propiedades basándote en búsquedas visuales."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3
+    )
+    
+    respuesta = completion.choices[0].message.content
+    llm_time = time.time() - t2
+    
+    total_time = time.time() - total_start
+    
+    return jsonify({
+        "descripcion": respuesta,
+        "hoteles_encontrados": [
+            {
+                "_id": str(doc["_id"]),
+                "hotel_name": get_hotel_name_from_id(doc.get("id_hotel")),
+                "hotel_id": str(doc.get("id_hotel")),
+                "score": doc.get("score", 0)
+            }
+            for doc in top_docs
+        ],
+        "metricas": {
+            "embedding_ms": round(embedding_time * 1000, 2),
+            "vector_search_ms": round(search_time * 1000, 2),
+            "llm_ms": round(llm_time * 1000, 2),
+            "total_ms": round(total_time * 1000, 2)
+        }
+    })
+
+# 4. Texto a Texto - Buscar información de hoteles por descripción textual
+@app.route('/api/hotel/description/by-text', methods=['POST'])
+def describe_hotels_by_text():
+    total_start = time.time()
+    
+    data = request.get_json()
+    query_text = data.get('query', '')
+    
+    if not query_text:
+        return jsonify({"error": "No query text provided"}), 400
+    
+    # Embedding del texto
+    t0 = time.time()
+    query_embedding = embed_texts_clip([query_text])[0].tolist()
+    embedding_time = time.time() - t0
+    
+    # Vector search en images_ref
+    t1 = time.time()
+    top_docs = vector_search_helper(
+        collection=coll_images_ref,
+        embedding_field="image_embedding",
+        query_embedding=query_embedding,
+        k=5,
+        search_index="vector_index"
+    )
+    search_time = time.time() - t1
+    
+    # Obtener información detallada de hoteles
+    t2 = time.time()
+    hotel_details = []
+    seen_hotels = set()
+    
+    for doc in top_docs:
+        hotel_id = doc.get("id_hotel")
+        if hotel_id not in seen_hotels:
+            seen_hotels.add(hotel_id)
+            try:
+                hotel_doc = coll_hotels.find_one({"_id": ObjectId(hotel_id)})
+                if hotel_doc:
+                    hotel_details.append({
+                        "nombre": hotel_doc.get("nombre", "N/A"),
+                        "ciudad": hotel_doc.get("ciudad", "N/A"),
+                        "direccion": hotel_doc.get("direccion", "N/A"),
+                        "estrellas": hotel_doc.get("numeroEstrelllas", "N/A"),
+                        "capacidad": hotel_doc.get("capacidad", "N/A")
+                    })
+            except:
+                pass
+    
+    # Generar respuesta con LLM
+    hotel_info_text = "\n".join([
+        f"{i+1}. {h['nombre']} - {h['estrellas']} estrellas en {h['ciudad']}, capacidad: {h['capacidad']} personas"
+        for i, h in enumerate(hotel_details)
+    ])
+    
+    prompt = f"""
+    El usuario pregunta: "{query_text}"
+    
+    Basándote en estos hoteles encontrados:
+    {hotel_info_text}
+    
+    Responde la pregunta del usuario de forma natural y útil, mencionando los hoteles relevantes.
+    """
+    
+    completion = groq_client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {"role": "system", "content": "Eres un asistente experto en hoteles que ayuda a los usuarios a encontrar información relevante."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3
+    )
+    
+    respuesta = completion.choices[0].message.content
+    llm_time = time.time() - t2
+    
+    total_time = time.time() - total_start
+    
+    return jsonify({
+        "query": query_text,
+        "respuesta": respuesta,
+        "hoteles_encontrados": hotel_details,
+        "metricas": {
+            "embedding_ms": round(embedding_time * 1000, 2),
+            "vector_search_ms": round(search_time * 1000, 2),
+            "llm_ms": round(llm_time * 1000, 2),
+            "total_ms": round(total_time * 1000, 2)
+        }
+    })
+
+print("✅ Hotel multimodal search endpoints defined.")
 # Run the Flask app
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
