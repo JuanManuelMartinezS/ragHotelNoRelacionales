@@ -77,7 +77,7 @@ def vector_search_helper(
     query_embedding,
     k=5,
     filters=None,
-    search_index="vector_index_1",
+    search_index="vector_index",
     use_native_vector_search=True
 ):
     """
@@ -238,13 +238,25 @@ def get_hotel_name_from_id(hotel_id_val):
 
 # ===== REVIEW SEARCH ENDPOINTS =====
 
-@app.route('/api/reviews/search/by-text', methods=['GET'])
+
+@app.route('/api/reviews/search/by-text', methods=['POST'])
 def search_reviews_by_text():
-    query_text = request.args.get('query', '')
+    # Obtener datos del body
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "Request body is required."}), 400
+    
+    query_text = data.get('query', '')
+    min_score = float(data.get('min_score', 0.5))  # Umbral de similitud
+    k = int(data.get('k', 4))  # Buscar más para compensar duplicados
+    
     print(f"\n🔍 [REVIEW SEARCH] Query text: '{query_text}'")
+    print(f"   - Min score threshold: {min_score}")
+    print(f"   - K (before dedup): {k}")
     
     if not query_text:
-        return jsonify({"error": "Query text is required."}), 400
+        return jsonify({"error": "Query text is required in body."}), 400
 
     # Generate embedding
     print(f"🧠 Generating embedding for query...")
@@ -254,39 +266,33 @@ def search_reviews_by_text():
     # Perform vector search
     print(f"🔎 Searching in collection: {coll_resenas.name}")
     print(f"   - Field: comentario_embedding")
-    print(f"   - K: 10")
+    print(f"   - K: {k}")
     
     try:
+        # 🔍 Verificar qué índice existe en MongoDB Atlas
+        print(f"🔎 Intentando búsqueda con índice 'vector_index_1'...")
+        
         results = vector_search_helper(
             collection=coll_resenas,
             embedding_field="comentario_embedding",
             query_embedding=query_embedding,
-            k=10
+            k=k,
+            search_index="vector_index"  # 🔥 Asegúrate que este nombre coincida
         )
         print(f"📊 Vector search returned {len(results)} documents")
         
-        # Debug: Print first result structure
-        if results:
-            print(f"📄 First result keys: {list(results[0].keys())}")
-            print(f"📄 First result: {results[0]}")
-        else:
+        if not results:
             print("⚠️  No results found from vector search")
-            # Check if collection has documents
             doc_count = coll_resenas.count_documents({})
             print(f"ℹ️  Total documents in collection: {doc_count}")
             
-            # Check if any document has the embedding field
             sample_doc = coll_resenas.find_one({"comentario_embedding": {"$exists": True}})
             if sample_doc:
                 print(f"✅ Found document with comentario_embedding field")
-                print(f"   Sample _id: {sample_doc.get('_id')}")
-                print(f"   Has comentario: {bool(sample_doc.get('comentario'))}")
             else:
                 print(f"❌ No documents found with 'comentario_embedding' field")
-                # Check what fields exist
-                sample_any = coll_resenas.find_one()
-                if sample_any:
-                    print(f"   Available fields in a sample doc: {list(sample_any.keys())}")
+            
+            return jsonify([])
     
     except Exception as e:
         print(f"❌ Error during vector search: {e}")
@@ -294,11 +300,47 @@ def search_reviews_by_text():
         traceback.print_exc()
         return jsonify({"error": f"Search failed: {str(e)}"}), 500
 
-    comments = [doc.get('comentario') for doc in results if doc.get('comentario')]
-    print(f"💬 Extracted {len(comments)} comments from results")
+    # Process results: remove duplicates and filter by score
+    seen_comments = set()
+    unique_results = []
     
-    return jsonify(comments)
-
+    for doc in results:
+        comentario = doc.get('comentario')
+        score = doc.get('score', 0)
+        
+        # Skip if no comment or below threshold
+        if not comentario or score < min_score:
+            continue
+        
+        # Skip duplicates (normalize text for comparison)
+        comentario_normalized = comentario.strip().lower()
+        if comentario_normalized in seen_comments:
+            print(f"⚠️  Skipping duplicate comment (score: {score:.3f})")
+            continue
+        
+        seen_comments.add(comentario_normalized)
+        
+        # Get hotel name if hotel_id exists
+        hotel_name = "Unknown Hotel"
+        if doc.get('hotel_id'):
+            hotel_name = get_hotel_name_from_id(doc.get('hotel_id'))
+        
+        unique_results.append({
+            "comentario": comentario,
+            "score": round(score, 4),
+            "hotel_name": hotel_name,
+            "hotel_id": str(doc.get('hotel_id', '')),
+            "_id": str(doc.get('_id', ''))
+        })
+    
+    print(f"💬 Extracted {len(unique_results)} unique comments from {len(results)} results")
+    print(f"   - Duplicates removed: {len(results) - len(unique_results)}")
+    print(f"   - Score range: {min([r['score'] for r in unique_results]) if unique_results else 0:.3f} - {max([r['score'] for r in unique_results]) if unique_results else 0:.3f}")
+    
+    # Limit to top 10 unique results
+    unique_results = unique_results[:10]
+    
+    return jsonify(unique_results)
 @app.route('/api/reviews/search/by-text/<hotel_id>', methods=['GET'])
 def search_reviews_by_text_and_hotel(hotel_id):
     query_text = request.args.get('query', '')
@@ -372,66 +414,9 @@ def search_reviews_by_image_and_hotel(hotel_id):
     comments = [doc.get('comentario') for doc in results if doc.get('comentario')]
     return jsonify(comments)
 
-print("✅ Review search API endpoints defined.")
-
-# ===== GENERIC QUERY ENDPOINT =====
-
-@app.route('/api/query', methods=['POST'])
-def generic_query():
-    """
-    Generic query endpoint.
-    
-    Request body (JSON):
-    {
-        "database": "Hotel",
-        "collection": "hotel",
-        "query": {"name": "Hotel Example"},  // Optional
-        "projection": {"name": 1, "_id": 0},  // Optional
-        "limit": 10,  // Optional
-        "username": "custom_user",  // Optional - uses default if not provided
-        "password": "custom_pass"  // Optional - required if username is provided
-    }
-    """
-    data = request.get_json()
-    
-    if not data:
-        return jsonify({"error": "Request body is required."}), 400
-    
-    database_name = data.get('database')
-    collection_name = data.get('collection')
-    
-    if not database_name or not collection_name:
-        return jsonify({"error": "Both 'database' and 'collection' are required."}), 400
-    
-    query = data.get('query', {})
-    projection = data.get('projection')
-    limit = data.get('limit', 0)
-    username = data.get('username')
-    password = data.get('password')
-    
-    print(f"\n🔍 [GENERIC QUERY]")
-    print(f"   Database: {database_name}")
-    print(f"   Collection: {collection_name}")
-    print(f"   Query: {query}")
-    print(f"   Projection: {projection}")
-    print(f"   Limit: {limit}")
-    print(f"   Custom User: {username if username else 'Using default'}")
-    
-    try:
-        results = execute_query(database_name, collection_name, query, projection, limit, username, password)
-        print(f"✅ Query returned {len(results)} documents")
-        
-        # Convert ObjectId to string for JSON serialization
-        for doc in results:
-            if '_id' in doc:
-                doc['_id'] = str(doc['_id'])
-        
-        return jsonify(results)
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        return jsonify({"error": str(e)}), 500
 
 print("✅ Generic query API endpoint defined.")
+print("✅ CRUD endpoints (insert, update, delete) defined.")
 
 # ===== HOTEL IMAGE SEARCH ENDPOINTS =====
 
