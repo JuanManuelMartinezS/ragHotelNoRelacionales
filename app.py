@@ -452,6 +452,7 @@ def rag_reviews_by_image_groq():
 # =========================================================
 
 # 1. Imagen a Imagen - Buscar imágenes de hoteles similares a una imagen subida
+# 1. Imagen a Imagen - Buscar imágenes de hoteles similares a una imagen subida
 @app.route('/api/hotel/images/by-image', methods=['POST'])
 def search_hotel_images_by_image():
     total_start = time.time()
@@ -467,16 +468,58 @@ def search_hotel_images_by_image():
     query_embedding = embed_images_clip([img])[0].tolist()
     embedding_time = time.time() - t0
     
+    # 🔍 DEBUGGING: Verificar colección
+    total_docs = coll_images_ref.count_documents({})
+    docs_with_embedding = coll_images_ref.count_documents({"image_embedding": {"$exists": True}})
+    docs_with_images = coll_images_ref.count_documents({"image_file_id": {"$exists": True}})
+    
+    print(f"📊 Total documents in images_ref: {total_docs}")
+    print(f"📊 Documents with image_embedding: {docs_with_embedding}")
+    print(f"📊 Documents with image_file_id: {docs_with_images}")
+    
     # Vector search en images_ref
     t1 = time.time()
-    top_docs = vector_search_helper(
-        collection=coll_images_ref,
-        embedding_field="image_embedding",
-        query_embedding=query_embedding,
-        k=10,
-        search_index="vector_index"
-    )
+    try:
+        top_docs = vector_search_helper(
+            collection=coll_images_ref,
+            embedding_field="image_embedding",
+            query_embedding=query_embedding,
+            k=10,
+            search_index="vector_index_img"
+        )
+        print(f"✅ Vector search returned {len(top_docs)} documents")
+    except Exception as e:
+        print(f"❌ Vector search error: {e}")
+        # Fallback: búsqueda simple
+        top_docs = list(coll_images_ref.find({"image_embedding": {"$exists": True}}).limit(10))
+        print(f"⚠️ Using fallback query, returned {len(top_docs)} documents")
+    
     search_time = time.time() - t1
+    
+    # Si no hay resultados, retornar información útil
+    if not top_docs:
+        return jsonify({
+            "results": [],
+            "warning": "No se encontraron imágenes similares",
+            "debug_info": {
+                "total_documents": total_docs,
+                "documents_with_embeddings": docs_with_embedding,
+                "documents_with_images": docs_with_images,
+                "possible_causes": [
+                    "La colección images_ref está vacía",
+                    "No existen embeddings en los documentos",
+                    "El índice vectorial no está configurado correctamente",
+                    "Las imágenes no están almacenadas en GridFS"
+                ],
+                "solution": "Ejecuta el script de procesamiento de imágenes para generar embeddings"
+            },
+            "metricas": {
+                "embedding_ms": round(embedding_time * 1000, 2),
+                "vector_search_ms": round(search_time * 1000, 2),
+                "processing_ms": 0,
+                "total_ms": round((time.time() - total_start) * 1000, 2)
+            }
+        }), 200
     
     # Recuperar imágenes y nombres de hoteles
     t2 = time.time()
@@ -495,6 +538,9 @@ def search_hotel_images_by_image():
         
         if img_data:
             result["image_base64"] = image_to_base64(img_data)
+        else:
+            result["image_base64"] = None
+            print(f"⚠️ Could not retrieve image for file_id: {doc.get('image_file_id')}")
         
         results.append(result)
     
@@ -510,7 +556,6 @@ def search_hotel_images_by_image():
             "total_ms": round(total_time * 1000, 2)
         }
     })
-
 # 2. Texto a Imagen - Buscar imágenes de hoteles usando descripción de texto
 @app.route('/api/hotel/images/by-text', methods=['POST'])
 def search_hotel_images_by_text():
@@ -595,7 +640,7 @@ def describe_hotels_by_image():
         embedding_field="image_embedding",
         query_embedding=query_embedding,
         k=5,
-        search_index="vector_index"
+        search_index="vector_index_img"
     )
     search_time = time.time() - t1
     
